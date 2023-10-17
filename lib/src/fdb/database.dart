@@ -20,6 +20,7 @@ class Database {
   getRange(begin, end, options) {}
   getRangeStartWith(prefix, options) {}
   keyEncoding() {}
+  openTenant() {}
   rebootWorker() {}
   set(key, value) {}
   setAndWatch(key, value) {}

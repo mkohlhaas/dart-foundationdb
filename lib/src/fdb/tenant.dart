@@ -1,0 +1,4 @@
+class Tenant {
+  destroy() {}
+  createTransaction() {}
+}
