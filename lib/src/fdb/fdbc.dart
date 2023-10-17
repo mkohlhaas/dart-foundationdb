@@ -652,6 +652,7 @@ class FDBC {
           int Function(ffi.Pointer<FDB_result>,
               ffi.Pointer<ffi.Pointer<bgmutation>>, ffi.Pointer<ffi.Int>)>();
 
+  /// TODO: add other return types as we need them
   int fdb_create_database(
     ffi.Pointer<ffi.Char> cluster_file_path,
     ffi.Pointer<ffi.Pointer<FDB_database>> out_database,
@@ -2560,237 +2561,6 @@ abstract class FDBNetworkOption {
   static const int FDB_NET_OPTION_EXTERNAL_CLIENT_TRANSPORT_ID = 1002;
 }
 
-final class FDB_future extends ffi.Opaque {}
-
-@ffi.Packed(4)
-final class keyvalue extends ffi.Struct {
-  external ffi.Pointer<ffi.Uint8> key;
-
-  @ffi.Int()
-  external int key_length;
-
-  external ffi.Pointer<ffi.Uint8> value;
-
-  @ffi.Int()
-  external int value_length;
-}
-
-/// Memory layout of MappedKeyValueRef.
-///
-/// Total 112 bytes
-/// - key (12 bytes)
-/// :74:8F:8E:5F:AE:7F:00:00
-/// :4A:00:00:00
-/// - value (12 bytes)
-/// :70:8F:8E:5F:AE:7F:00:00
-/// :00:00:00:00
-/// - begin selector (20 bytes)
-/// :30:8F:8E:5F:AE:7F:00:00
-/// :2D:00:00:00
-/// :00:7F:00:00
-/// :01:00:00:00
-/// - end selector (20 bytes)
-/// :EC:8E:8E:5F:AE:7F:00:00
-/// :2D:00:00:00
-/// :00:2B:3C:60
-/// :01:00:00:00
-/// - vector (16 bytes)
-/// :74:94:8E:5F:AE:7F:00:00
-/// :01:00:00:00
-/// :01:00:00:00
-/// - buffer (32 bytes)
-/// :00:20:D1:61:00:00:00:00
-/// :00:00:00:00:00:00:00:00
-/// :00:00:00:00:00:00:00:00
-/// :01:00:00:00:AE:7F:00:00
-final class mappedkeyvalue extends ffi.Struct {
-  external key key1;
-
-  external key value;
-
-  /// It's complicated to map a std::variant to C. For now we assume the underlying requests are always getRange and
-  /// take the shortcut.
-  external getrangereqandresult getRange;
-
-  @ffi.Array.multi([32])
-  external ffi.Array<ffi.UnsignedChar> buffer;
-}
-
-@ffi.Packed(4)
-final class key extends ffi.Struct {
-  external ffi.Pointer<ffi.Uint8> key1;
-
-  @ffi.Int()
-  external int key_length;
-}
-
-/// Memory layout of GetRangeReqAndResultRef.
-final class getrangereqandresult extends ffi.Struct {
-  external keyselector begin;
-
-  external keyselector end;
-
-  external ffi.Pointer<keyvalue> data;
-
-  @ffi.Int()
-  external int m_size;
-
-  @ffi.Int()
-  external int m_capacity;
-}
-
-/// Memory layout of KeySelectorRef.
-final class keyselector extends ffi.Struct {
-  external key key1;
-
-  /// orEqual and offset have not be tested in C binding. Just a placeholder.
-  @ffi.Int()
-  external int orEqual;
-
-  @ffi.Int()
-  external int offset;
-}
-
-@ffi.Packed(4)
-final class keyrange extends ffi.Struct {
-  external ffi.Pointer<ffi.Uint8> begin_key;
-
-  @ffi.Int()
-  external int begin_key_length;
-
-  external ffi.Pointer<ffi.Uint8> end_key;
-
-  @ffi.Int()
-  external int end_key_length;
-}
-
-@ffi.Packed(4)
-final class granulesummary extends ffi.Struct {
-  external keyrange key_range;
-
-  @ffi.Int64()
-  external int snapshot_version;
-
-  @ffi.Int64()
-  external int snapshot_size;
-
-  @ffi.Int64()
-  external int delta_version;
-
-  @ffi.Int64()
-  external int delta_size;
-}
-
-@ffi.Packed(4)
-final class bgfiledescription extends ffi.Struct {
-  external keyrange key_range;
-
-  @ffi.Int()
-  external int snapshot_present;
-
-  external bgfilepointer snapshot_file_pointer;
-
-  @ffi.Int()
-  external int delta_file_count;
-
-  external ffi.Pointer<bgfilepointer> delta_files;
-
-  @ffi.Int()
-  external int memory_mutation_count;
-
-  external ffi.Pointer<bgmutation> memory_mutations;
-
-  external bgtenantprefix tenant_prefix;
-}
-
-@ffi.Packed(4)
-final class bgfilepointer extends ffi.Struct {
-  external ffi.Pointer<ffi.Uint8> filename_ptr;
-
-  @ffi.Int()
-  external int filename_length;
-
-  @ffi.Int64()
-  external int file_offset;
-
-  @ffi.Int64()
-  external int file_length;
-
-  @ffi.Int64()
-  external int full_file_length;
-
-  @ffi.Int64()
-  external int file_version;
-
-  external bgencryptionctx encryption_ctx;
-}
-
-final class bgencryptionctx extends ffi.Struct {
-  @ffi.Int()
-  external int present;
-
-  external bgencryptionkey textKey;
-
-  @ffi.Uint32()
-  external int textKCV;
-
-  external bgencryptionkey headerKey;
-
-  @ffi.Uint32()
-  external int headerKCV;
-
-  external key iv;
-}
-
-/// encryption structs correspond to similar ones in BlobGranuleCommon.h
-@ffi.Packed(4)
-final class bgencryptionkey extends ffi.Struct {
-  @ffi.Int64()
-  external int domain_id;
-
-  @ffi.Uint64()
-  external int base_key_id;
-
-  @ffi.Uint32()
-  external int base_kcv;
-
-  @ffi.Uint64()
-  external int random_salt;
-
-  external key base_key;
-}
-
-@ffi.Packed(4)
-final class bgmutation extends ffi.Struct {
-  /// FDBBGMutationType
-  @ffi.Uint8()
-  external int type;
-
-  @ffi.Int64()
-  external int version;
-
-  external ffi.Pointer<ffi.Uint8> param1_ptr;
-
-  @ffi.Int()
-  external int param1_length;
-
-  external ffi.Pointer<ffi.Uint8> param2_ptr;
-
-  @ffi.Int()
-  external int param2_length;
-}
-
-final class bgtenantprefix extends ffi.Struct {
-  @ffi.Int()
-  external int present;
-
-  external key prefix;
-}
-
-final class FDB_result extends ffi.Opaque {}
-
-final class FDB_database extends ffi.Opaque {}
-
 abstract class FDBDatabaseOption {
   /// Set the size of the client location cache. Raising this value can boost performance in very large databases where clients access data in a near-random pattern. Defaults to 100000. */
   /// /* Parameter: (Int) Max location cache entries
@@ -2869,10 +2639,6 @@ abstract class FDBDatabaseOption {
   /// /* Parameter: (Int) integer between 0 and 100 expressing the probability a client will verify it can't read stale data
   static const int FDB_DB_OPTION_TEST_CAUSAL_READ_RISKY = 900;
 }
-
-final class FDB_tenant extends ffi.Opaque {}
-
-final class FDB_transaction extends ffi.Opaque {}
 
 abstract class FDBTransactionOption {
   /// The transaction, if not self-conflicting, may be committed a second time after commit succeeds, in the event of a fault */
@@ -3173,6 +2939,257 @@ abstract class FDBConflictRangeType {
   /// Used to add a write conflict range
   static const int FDB_CONFLICT_RANGE_TYPE_WRITE = 1;
 }
+
+abstract class FDBErrorPredicate {
+  /// Returns ``true`` if the error indicates the operations in the transactions should be retried because of transient error.
+  static const int FDB_ERROR_PREDICATE_RETRYABLE = 50000;
+
+  /// Returns ``true`` if the error indicates the transaction may have succeeded, though not in a way the system can verify.
+  static const int FDB_ERROR_PREDICATE_MAYBE_COMMITTED = 50001;
+
+  /// Returns ``true`` if the error indicates the transaction has not committed, though in a way that can be retried.
+  static const int FDB_ERROR_PREDICATE_RETRYABLE_NOT_COMMITTED = 50002;
+}
+
+abstract class FDBBGMutationType {
+  static const int FDB_BG_MUTATION_TYPE_SET_VALUE = 0;
+  static const int FDB_BG_MUTATION_TYPE_CLEAR_RANGE = 1;
+}
+
+final class FDB_future extends ffi.Opaque {}
+
+@ffi.Packed(4)
+final class keyvalue extends ffi.Struct {
+  external ffi.Pointer<ffi.Uint8> key;
+
+  @ffi.Int()
+  external int key_length;
+
+  external ffi.Pointer<ffi.Uint8> value;
+
+  @ffi.Int()
+  external int value_length;
+}
+
+/// Memory layout of MappedKeyValueRef.
+///
+/// Total 112 bytes
+/// - key (12 bytes)
+/// :74:8F:8E:5F:AE:7F:00:00
+/// :4A:00:00:00
+/// - value (12 bytes)
+/// :70:8F:8E:5F:AE:7F:00:00
+/// :00:00:00:00
+/// - begin selector (20 bytes)
+/// :30:8F:8E:5F:AE:7F:00:00
+/// :2D:00:00:00
+/// :00:7F:00:00
+/// :01:00:00:00
+/// - end selector (20 bytes)
+/// :EC:8E:8E:5F:AE:7F:00:00
+/// :2D:00:00:00
+/// :00:2B:3C:60
+/// :01:00:00:00
+/// - vector (16 bytes)
+/// :74:94:8E:5F:AE:7F:00:00
+/// :01:00:00:00
+/// :01:00:00:00
+/// - buffer (32 bytes)
+/// :00:20:D1:61:00:00:00:00
+/// :00:00:00:00:00:00:00:00
+/// :00:00:00:00:00:00:00:00
+/// :01:00:00:00:AE:7F:00:00
+final class mappedkeyvalue extends ffi.Struct {
+  external key key1;
+
+  external key value;
+
+  /// It's complicated to map a std::variant to C. For now we assume the underlying requests are always getRange and
+  /// take the shortcut.
+  external getrangereqandresult getRange;
+
+  @ffi.Array.multi([32])
+  external ffi.Array<ffi.UnsignedChar> buffer;
+}
+
+@ffi.Packed(4)
+final class key extends ffi.Struct {
+  external ffi.Pointer<ffi.Uint8> key1;
+
+  @ffi.Int()
+  external int key_length;
+}
+
+/// Memory layout of GetRangeReqAndResultRef.
+final class getrangereqandresult extends ffi.Struct {
+  external keyselector begin;
+
+  external keyselector end;
+
+  external ffi.Pointer<keyvalue> data;
+
+  @ffi.Int()
+  external int m_size;
+
+  @ffi.Int()
+  external int m_capacity;
+}
+
+/// Memory layout of KeySelectorRef.
+final class keyselector extends ffi.Struct {
+  external key key1;
+
+  /// orEqual and offset have not be tested in C binding. Just a placeholder.
+  @ffi.Int()
+  external int orEqual;
+
+  @ffi.Int()
+  external int offset;
+}
+
+@ffi.Packed(4)
+final class keyrange extends ffi.Struct {
+  external ffi.Pointer<ffi.Uint8> begin_key;
+
+  @ffi.Int()
+  external int begin_key_length;
+
+  external ffi.Pointer<ffi.Uint8> end_key;
+
+  @ffi.Int()
+  external int end_key_length;
+}
+
+@ffi.Packed(4)
+final class granulesummary extends ffi.Struct {
+  external keyrange key_range;
+
+  @ffi.Int64()
+  external int snapshot_version;
+
+  @ffi.Int64()
+  external int snapshot_size;
+
+  @ffi.Int64()
+  external int delta_version;
+
+  @ffi.Int64()
+  external int delta_size;
+}
+
+@ffi.Packed(4)
+final class bgfiledescription extends ffi.Struct {
+  external keyrange key_range;
+
+  @ffi.Int()
+  external int snapshot_present;
+
+  external bgfilepointer snapshot_file_pointer;
+
+  @ffi.Int()
+  external int delta_file_count;
+
+  external ffi.Pointer<bgfilepointer> delta_files;
+
+  @ffi.Int()
+  external int memory_mutation_count;
+
+  external ffi.Pointer<bgmutation> memory_mutations;
+
+  external bgtenantprefix tenant_prefix;
+}
+
+@ffi.Packed(4)
+final class bgfilepointer extends ffi.Struct {
+  external ffi.Pointer<ffi.Uint8> filename_ptr;
+
+  @ffi.Int()
+  external int filename_length;
+
+  @ffi.Int64()
+  external int file_offset;
+
+  @ffi.Int64()
+  external int file_length;
+
+  @ffi.Int64()
+  external int full_file_length;
+
+  @ffi.Int64()
+  external int file_version;
+
+  external bgencryptionctx encryption_ctx;
+}
+
+final class bgencryptionctx extends ffi.Struct {
+  @ffi.Int()
+  external int present;
+
+  external bgencryptionkey textKey;
+
+  @ffi.Uint32()
+  external int textKCV;
+
+  external bgencryptionkey headerKey;
+
+  @ffi.Uint32()
+  external int headerKCV;
+
+  external key iv;
+}
+
+/// encryption structs correspond to similar ones in BlobGranuleCommon.h
+@ffi.Packed(4)
+final class bgencryptionkey extends ffi.Struct {
+  @ffi.Int64()
+  external int domain_id;
+
+  @ffi.Uint64()
+  external int base_key_id;
+
+  @ffi.Uint32()
+  external int base_kcv;
+
+  @ffi.Uint64()
+  external int random_salt;
+
+  external key base_key;
+}
+
+@ffi.Packed(4)
+final class bgmutation extends ffi.Struct {
+  /// FDBBGMutationType
+  @ffi.Uint8()
+  external int type;
+
+  @ffi.Int64()
+  external int version;
+
+  external ffi.Pointer<ffi.Uint8> param1_ptr;
+
+  @ffi.Int()
+  external int param1_length;
+
+  external ffi.Pointer<ffi.Uint8> param2_ptr;
+
+  @ffi.Int()
+  external int param2_length;
+}
+
+final class bgtenantprefix extends ffi.Struct {
+  @ffi.Int()
+  external int present;
+
+  external key prefix;
+}
+
+final class FDB_result extends ffi.Opaque {}
+
+final class FDB_database extends ffi.Opaque {}
+
+final class FDB_tenant extends ffi.Opaque {}
+
+final class FDB_transaction extends ffi.Opaque {}
 
 final class readgranulecontext extends ffi.Struct {
   /// User context to pass along to functions

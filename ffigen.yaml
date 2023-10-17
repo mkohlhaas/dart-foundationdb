@@ -10,6 +10,9 @@ comments:
 functions:
   include:
     - fdb_.*
+enums:
+  include:
+    - FDB.*
 exclude-all-by-default: true
 compiler-opts:
   - '-D FDB_USE_LATEST_API_VERSION'

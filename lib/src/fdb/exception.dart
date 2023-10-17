@@ -1,11 +1,8 @@
-class Exception {
+class FDBException implements Exception {
   final String message;
+  final int errorCode;
 
-  Exception(this.message);
-
-  static Exception loadError(int errorCode) {
-    return Exception("TODO");
-  }
+  FDBException(this.message, this.errorCode);
 
   @override
   String toString() => message;

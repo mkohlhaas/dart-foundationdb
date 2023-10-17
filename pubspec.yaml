@@ -9,6 +9,7 @@ environment:
 
 dependencies:
   ffi: ^2.1.0
+  system_info2: ^4.0.0
 
 dev_dependencies:
   ffigen: ^9.0.1

@@ -1,22 +1,34 @@
-// - final fdbc = FDBC(DynamicLibrary.open('libfdb_c.so'));
-// - from https://github.com/apple/foundationdb/blob/main/bindings/ruby/lib/fdbimpl.rb
-//   Use this package to find architecture: x86_64, ARM64, ...
-//   - https://pub.dev/packages/system_info2
-//
-//     import 'dart:io' show Platform;
-//     var so = switch(Platform.operatingSystem) {
-//         case 'linux': 'libfdb_c.so';
-//         case 'macos': 'libfdb_c.dylib';
-//         case 'windows': 'fdb_c.dll';
-//       }
-class FDB {
-  int? selectedApiVersion;
+import 'package:foundationdb/foundationdb.dart';
 
-  static selectApiVersion(int version) {}
-  static getApiVersion() {}
-  static isApiVersionSelected() {}
-  static getMaxApiVersion() {}
+class FDB {
+  static int? _selectedApiVersion;
+
+  static int? selectedApiVersion() {
+    return _selectedApiVersion;
+  }
+
+  static int getMaxApiVersion() {
+    return fdbc.fdb_get_max_api_version();
+  }
+
+  static bool isApiVersionSelected() {
+    return _selectedApiVersion != null;
+  }
+
   static openDatabase() {}
-  static openDatabaseDefault() {}
   static openDatabaseConfig() {}
+  static openDatabaseDefault() {}
+
+  static void selectApiVersion(int version) {
+    try {
+      handleError(fdbc.fdb_select_api_version_impl(version, version));
+      _selectedApiVersion = version;
+    } catch (_) {
+      rethrow;
+    }
+  }
+
+  static void selectMaxApiVersion() {
+    selectApiVersion(getMaxApiVersion());
+  }
 }

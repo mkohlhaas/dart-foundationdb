@@ -1,3 +1,5 @@
+import 'package:foundationdb/foundationdb.dart';
+
 class Database {
   operator [](key) {}
   operator []=(key, value) {}
