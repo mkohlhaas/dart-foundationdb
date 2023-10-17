@@ -652,7 +652,6 @@ class FDBC {
           int Function(ffi.Pointer<FDB_result>,
               ffi.Pointer<ffi.Pointer<bgmutation>>, ffi.Pointer<ffi.Int>)>();
 
-  /// TODO: add other return types as we need them
   int fdb_create_database(
     ffi.Pointer<ffi.Char> cluster_file_path,
     ffi.Pointer<ffi.Pointer<FDB_database>> out_database,
