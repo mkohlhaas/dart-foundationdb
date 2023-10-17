@@ -1,0 +1,15 @@
+name: 'FDBC'
+description: 'FoundationDB bindings'
+output: 'lib/src/fdb/fdbc.dart'
+headers:
+  entry-points:
+    - '/usr/include/foundationdb/fdb_c.h'
+comments:
+  style: any
+  length: full
+functions:
+  include:
+    - fdb_.*
+exclude-all-by-default: true
+compiler-opts:
+  - '-D FDB_USE_LATEST_API_VERSION'
