@@ -11,7 +11,7 @@ class FDB {
     return _selectedApiVersion;
   }
 
-  static int getMaxApiVersion() {
+  static int maxApiVersion() {
     return fdbc.fdb_get_max_api_version();
   }
 
@@ -24,8 +24,10 @@ class FDB {
     final clusterFileC = clusterFile.toNativeUtf8();
     final ppDatabase = calloc<Pointer<FDB_database>>();
     try {
-      Network.setupNetwork();
-      handleError(fdbc.fdb_create_database(clusterFileC.cast(), ppDatabase));
+      handleError(fdbc.fdb_create_database(
+        clusterFileC.cast(),
+        ppDatabase,
+      ));
       return Database(ppDatabase.value);
     } catch (_) {
       rethrow;
@@ -39,9 +41,10 @@ class FDB {
     final connectionStringC = connectionString.toNativeUtf8();
     final ppDatabase = calloc<Pointer<FDB_database>>();
     try {
-      Network.setupNetwork();
       handleError(fdbc.fdb_create_database_from_connection_string(
-          connectionStringC.cast(), ppDatabase));
+        connectionStringC.cast(),
+        ppDatabase,
+      ));
       return Database(ppDatabase.value);
     } catch (_) {
       rethrow;
@@ -61,6 +64,6 @@ class FDB {
   }
 
   static void selectMaxApiVersion() {
-    selectApiVersion(getMaxApiVersion());
+    selectApiVersion(maxApiVersion());
   }
 }

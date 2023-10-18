@@ -1,20 +1,52 @@
+import 'dart:io';
+import 'dart:isolate';
+
 import 'package:foundationdb/foundationdb.dart';
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 
 class Network {
+  static bool _isNetworkStarted = false;
+  static final ReceivePort _receivePort = ReceivePort();
+
+  static Future<void> startNetwork() async {
+    void isoStartNetwork(int _) {
+      try {
+        runNetwork();
+      } catch (_) {
+        rethrow;
+      }
+    }
+
+    if (!_isNetworkStarted) {
+      _isNetworkStarted = true;
+      setupNetwork();
+      Isolate isolate = await Isolate.spawn<int>(
+        isoStartNetwork,
+        0,
+        onExit: _receivePort.sendPort,
+      );
+      print(isolate);
+    }
+  }
+
   // Must be called after fdb_select_api_version() (and zero or more calls to fdb_network_set_option()) and before any other function in this API. fdb_setup_network() can only be called once.
   static void setupNetwork() {
     try {
       handleError(fdbc.fdb_setup_network());
     } catch (_) {
+      print('error in setupNetwork');
       rethrow;
     }
   }
 
   static void _setOption(int networkOption) {
     try {
-      handleError(fdbc.fdb_network_set_option(networkOption, nullptr, 0));
+      handleError(fdbc.fdb_network_set_option(
+        networkOption,
+        nullptr,
+        0,
+      ));
     } catch (_) {
       rethrow;
     }
@@ -23,7 +55,11 @@ class Network {
   static void _setIntOption(int networkOption, int optionValue) {
     final optionValueC = calloc<Int64>();
     try {
-      handleError(fdbc.fdb_network_set_option(networkOption, optionValueC.cast(), 64));
+      handleError(fdbc.fdb_network_set_option(
+        networkOption,
+        optionValueC.cast(),
+        64,
+      ));
     } catch (_) {
       rethrow;
     } finally {
@@ -35,11 +71,37 @@ class Network {
     final optionValueC = optionValue.toNativeUtf8();
     try {
       handleError(fdbc.fdb_network_set_option(
-          networkOption, optionValueC.cast(), optionValue.length));
+        networkOption,
+        optionValueC.cast(),
+        optionValue.length,
+      ));
     } catch (_) {
       rethrow;
     } finally {
       calloc.free(optionValueC);
+    }
+  }
+
+  static void stopNetwork() {
+    try {
+      _receivePort.listen((Object? message) {
+        if (message == null) {
+          print('shutdown fdb');
+          _receivePort.close();
+        }
+      });
+      handleError(fdbc.fdb_stop_network());
+    } catch (_) {
+      rethrow;
+    }
+  }
+
+  static void runNetwork() {
+    try {
+      handleError(fdbc.fdb_run_network());
+    } catch (_) {
+      print('runNetwork');
+      rethrow;
     }
   }
 

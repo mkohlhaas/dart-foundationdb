@@ -1,29 +1,35 @@
+import 'dart:io';
+
 import 'package:foundationdb/foundationdb.dart';
 
-main() {
+main() async {
   try {
-    print(FDB.isApiVersionSelected());
+    // 1. Set API version
     FDB.selectMaxApiVersion();
-    print(FDB.isApiVersionSelected());
-    Network.setTraceInitializeOnSetup();
-    // var db = FDB.openDatabase();
-    var db = FDB.openDatabaseConfig('sfa:qwrqer@127.0.0.1:4000');
+
+    // 2. Set network options
+    // Network.setXXX();
+    // ...
+
+    // 3. Start network
+    await Network.startNetwork();
+
+    // 4. Open one or several(!) Databases
+    Database db = FDB.openDatabase();
     print(db);
-    // FDB.openDatabase('');
-    print(FDB.getMaxApiVersion());
-    // FDB.selectApiVersion(234);
-    print(FDB.selectedApiVersion());
-    print(FDB.isApiVersionSelected());
-  } on FDBException catch (err) {
+
+    // 5. Do your database stuff
+    // db['key'] = 'value';
+    // ...
+    print('waiting...');
+    await Future.delayed(Duration(seconds: 5));
+
+    // 6. Stop Network
+    Network.stopNetwork();
+  } on FDBException catch (err, s) {
     print('There was an error!');
+    print(s);
     print(err);
     print(err.errorCode);
-    // print(FDB.isApiVersionSelected());
-    // print(isErrorRetryable(err.errorCode));
-    // print(isErrorMaybeCommitted(err.errorCode));
-    // print(isErrorRetryableNotCommitted(err.errorCode));
-    // // if (err.errorCode == 2201) {
-    //   print("I don't care!");
-    // }
   }
 }

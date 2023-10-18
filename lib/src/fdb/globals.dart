@@ -10,8 +10,9 @@ final fdbc = _initFFI();
 void handleError(int errorCode) {
   if (errorCode != 0) {
     throw FDBException(
-        'FoundationDb: ${fdbc.fdb_get_error(errorCode).cast<Utf8>().toDartString()}',
-        errorCode);
+      'FoundationDb: ${fdbc.fdb_get_error(errorCode).cast<Utf8>().toDartString()}',
+      errorCode,
+    );
   }
 }
 
@@ -39,7 +40,7 @@ FDBC _initFFI() {
       _ => throw Exception('Unsupported platform'),
     };
     if (SysInfo.kernelArchitecture != ProcessorArchitecture.x86_64) {
-      throw Exception("FoundationDB is only supported on X86_64 and AMD64 platforms.");
+      throw Exception("FoundationDB is only supported on X86_64 and AMD64 architectures.");
     }
     return FDBC(DynamicLibrary.open(sharedLib));
   } catch (err) {
