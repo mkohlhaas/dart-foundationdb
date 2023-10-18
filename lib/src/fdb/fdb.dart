@@ -1,3 +1,7 @@
+import 'dart:ffi';
+import 'dart:io';
+import 'package:ffi/ffi.dart';
+
 import 'package:foundationdb/foundationdb.dart';
 
 class FDB {
@@ -15,9 +19,37 @@ class FDB {
     return _selectedApiVersion != null;
   }
 
-  static openDatabase() {}
-  static openDatabaseConfig() {}
-  static openDatabaseDefault() {}
+  // if clusterFile is the empty string then the default cluster file will be used
+  static Database openDatabase([String clusterFile = '']) {
+    final clusterFileC = clusterFile.toNativeUtf8();
+    final ppDatabase = calloc<Pointer<FDB_database>>();
+    try {
+      Network.setupNetwork();
+      handleError(fdbc.fdb_create_database(clusterFileC.cast(), ppDatabase));
+      return Database(ppDatabase.value);
+    } catch (_) {
+      rethrow;
+    } finally {
+      calloc.free(clusterFileC);
+      calloc.free(ppDatabase);
+    }
+  }
+
+  static Database openDatabaseConfig(String connectionString) {
+    final connectionStringC = connectionString.toNativeUtf8();
+    final ppDatabase = calloc<Pointer<FDB_database>>();
+    try {
+      Network.setupNetwork();
+      handleError(fdbc.fdb_create_database_from_connection_string(
+          connectionStringC.cast(), ppDatabase));
+      return Database(ppDatabase.value);
+    } catch (_) {
+      rethrow;
+    } finally {
+      calloc.free(connectionStringC);
+      calloc.free(ppDatabase);
+    }
+  }
 
   static void selectApiVersion(int version) {
     try {

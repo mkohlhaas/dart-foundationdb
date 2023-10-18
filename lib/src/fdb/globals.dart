@@ -31,18 +31,12 @@ bool isErrorRetryableNotCommitted(int errorCode) {
 }
 
 FDBC _initFFI() {
-  String linuxSharedLib = 'libfdb_c.so';
-  String macosSharedLib = 'libfdb_c.dylib';
-  String windowsSharedLib = 'fdb_c.dll';
-  String sharedLib = '';
-  String platform = Platform.operatingSystem;
   try {
-    sharedLib = switch (platform) {
-      'linux' => linuxSharedLib,
-      'macos' => macosSharedLib,
-      'windows' => windowsSharedLib,
-      'android' || 'fuchsia' || 'ios' => throw Exception('Unsupported platform'),
-      _ => throw Exception('Unknown platform'),
+    String platform = Platform.operatingSystem;
+    String sharedLib = switch (platform) {
+      'linux' => 'libfdb_c.so',
+      'macos' => 'libfdb_c.dylib',
+      _ => throw Exception('Unsupported platform'),
     };
     if (SysInfo.kernelArchitecture != ProcessorArchitecture.x86_64) {
       throw Exception("FoundationDB is only supported on X86_64 and AMD64 platforms.");

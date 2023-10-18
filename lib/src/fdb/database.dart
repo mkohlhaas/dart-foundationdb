@@ -1,6 +1,12 @@
 import 'package:foundationdb/foundationdb.dart';
+import 'dart:ffi';
+import 'package:ffi/ffi.dart';
 
 class Database {
+  late Pointer<FDB_database> _database;
+
+  Database(this._database);
+
   operator [](key) {}
   operator []=(key, value) {}
   add(key, param) {}
