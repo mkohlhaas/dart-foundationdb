@@ -11,11 +11,7 @@ class Network {
 
   static Future<void> startNetwork() async {
     void isoStartNetwork(int _) {
-      try {
-        runNetwork();
-      } catch (_) {
-        rethrow;
-      }
+      runNetwork();
     }
 
     if (!_isNetworkStarted) {
@@ -32,24 +28,15 @@ class Network {
 
   // Must be called after fdb_select_api_version() (and zero or more calls to fdb_network_set_option()) and before any other function in this API. fdb_setup_network() can only be called once.
   static void setupNetwork() {
-    try {
-      handleError(fdbc.fdb_setup_network());
-    } catch (_) {
-      print('error in setupNetwork');
-      rethrow;
-    }
+    handleError(fdbc.fdb_setup_network());
   }
 
   static void _setOption(int networkOption) {
-    try {
-      handleError(fdbc.fdb_network_set_option(
-        networkOption,
-        nullptr,
-        0,
-      ));
-    } catch (_) {
-      rethrow;
-    }
+    handleError(fdbc.fdb_network_set_option(
+      networkOption,
+      nullptr,
+      0,
+    ));
   }
 
   static void _setIntOption(int networkOption, int optionValue) {
@@ -60,8 +47,6 @@ class Network {
         optionValueC.cast(),
         64,
       ));
-    } catch (_) {
-      rethrow;
     } finally {
       calloc.free(optionValueC);
     }
@@ -75,34 +60,23 @@ class Network {
         optionValueC.cast(),
         optionValue.length,
       ));
-    } catch (_) {
-      rethrow;
     } finally {
       calloc.free(optionValueC);
     }
   }
 
   static void stopNetwork() {
-    try {
-      _receivePort.listen((Object? message) {
-        if (message == null) {
-          print('shutdown fdb');
-          _receivePort.close();
-        }
-      });
-      handleError(fdbc.fdb_stop_network());
-    } catch (_) {
-      rethrow;
-    }
+    _receivePort.listen((Object? message) {
+      if (message == null) {
+        print('shutdown fdb');
+        _receivePort.close();
+      }
+    });
+    handleError(fdbc.fdb_stop_network());
   }
 
   static void runNetwork() {
-    try {
-      handleError(fdbc.fdb_run_network());
-    } catch (_) {
-      print('runNetwork');
-      rethrow;
-    }
+    handleError(fdbc.fdb_run_network());
   }
 
   /// Enables trace output to a file in a directory of the clients choosing */

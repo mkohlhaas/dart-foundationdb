@@ -29,8 +29,6 @@ class FDB {
         ppDatabase,
       ));
       return Database(ppDatabase.value);
-    } catch (_) {
-      rethrow;
     } finally {
       calloc.free(clusterFileC);
       calloc.free(ppDatabase);
@@ -46,8 +44,6 @@ class FDB {
         ppDatabase,
       ));
       return Database(ppDatabase.value);
-    } catch (_) {
-      rethrow;
     } finally {
       calloc.free(connectionStringC);
       calloc.free(ppDatabase);
@@ -55,12 +51,8 @@ class FDB {
   }
 
   static void selectApiVersion(int version) {
-    try {
-      handleError(fdbc.fdb_select_api_version_impl(version, version));
-      _selectedApiVersion = version;
-    } catch (_) {
-      rethrow;
-    }
+    handleError(fdbc.fdb_select_api_version_impl(version, version));
+    _selectedApiVersion = version;
   }
 
   static void selectMaxApiVersion() {

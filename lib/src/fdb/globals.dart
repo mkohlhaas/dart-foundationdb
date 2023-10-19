@@ -5,36 +5,29 @@ import 'package:ffi/ffi.dart';
 import 'package:foundationdb/foundationdb.dart';
 import 'package:system_info2/system_info2.dart';
 
-final fdbc = _initFFI();
+final fdbc = _initLibrary();
 
 void handleError(int errorCode) {
   if (errorCode != 0) {
-    throw FDBException(
-      'FoundationDb: ${fdbc.fdb_get_error(errorCode).cast<Utf8>().toDartString()}',
-      errorCode,
-    );
+    throw FDBException('FoundationDb: ${fdbc.fdb_get_error(errorCode).cast<Utf8>().toDartString()}', errorCode);
   }
 }
 
 bool isErrorMaybeCommitted(int errorCode) {
-  int pred = FDBErrorPredicate.FDB_ERROR_PREDICATE_MAYBE_COMMITTED;
-  return fdbc.fdb_error_predicate(pred, errorCode) != 0;
+  return fdbc.fdb_error_predicate(FDBErrorPredicate.FDB_ERROR_PREDICATE_MAYBE_COMMITTED, errorCode) != 0;
 }
 
 bool isErrorRetryable(int errorCode) {
-  int pred = FDBErrorPredicate.FDB_ERROR_PREDICATE_RETRYABLE;
-  return fdbc.fdb_error_predicate(pred, errorCode) != 0;
+  return fdbc.fdb_error_predicate(FDBErrorPredicate.FDB_ERROR_PREDICATE_RETRYABLE, errorCode) != 0;
 }
 
 bool isErrorRetryableNotCommitted(int errorCode) {
-  int pred = FDBErrorPredicate.FDB_ERROR_PREDICATE_RETRYABLE_NOT_COMMITTED;
-  return fdbc.fdb_error_predicate(pred, errorCode) != 0;
+  return fdbc.fdb_error_predicate(FDBErrorPredicate.FDB_ERROR_PREDICATE_RETRYABLE_NOT_COMMITTED, errorCode) != 0;
 }
 
-FDBC _initFFI() {
+FDBC _initLibrary() {
   try {
-    String platform = Platform.operatingSystem;
-    String sharedLib = switch (platform) {
+    String sharedLib = switch (Platform.operatingSystem) {
       'linux' => 'libfdb_c.so',
       'macos' => 'libfdb_c.dylib',
       _ => throw Exception('Unsupported platform'),
