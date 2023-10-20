@@ -1,0 +1,3 @@
+[submodule "foundationdb"]
+	path = foundationdb
+	url = https://github.com/apple/foundationdb/
