@@ -1,10 +1,10 @@
 /// FoundationDB Bindings
 library;
 
+export 'src/api.dart';
 export 'src/database.dart';
 export 'src/directory.dart';
-export 'src/exception.dart';
-export 'src/fdb.dart';
+export 'src/error.dart';
 export 'src/fdbc.dart';
 export 'src/future.dart';
 export 'src/library.dart';

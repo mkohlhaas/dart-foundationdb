@@ -2,6 +2,32 @@ import '../foundationdb.dart';
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 
+// if clusterFile is the empty string then the default cluster file will be used
+Database openDatabase([String clusterFile = '']) {
+  return _open(clusterFile, fdbc.fdb_create_database);
+}
+
+Database openDatabaseConfig(String connectionString) {
+  return _open(connectionString, fdbc.fdb_create_database_from_connection_string);
+}
+
+typedef DbCreateFun = int Function(Pointer<Char>, Pointer<Pointer<FDB_database>>);
+
+Database _open(String connect, DbCreateFun createDbFun) {
+  final connectC = connect.toNativeUtf8().cast<Char>();
+  final ppDatabase = calloc<Pointer<FDB_database>>();
+  try {
+    handleError(createDbFun(
+      connectC,
+      ppDatabase,
+    ));
+    return Database(ppDatabase.value);
+  } finally {
+    calloc.free(connectC);
+    calloc.free(ppDatabase);
+  }
+}
+
 class Database {
   late Pointer<FDB_database> _database;
 

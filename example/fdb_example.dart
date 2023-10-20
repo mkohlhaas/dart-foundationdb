@@ -1,33 +1,36 @@
-import 'package:foundationdb/foundationdb.dart' as fdb;
+import 'dart:io';
+
+import 'package:foundationdb/foundationdb.dart';
 
 main() async {
   try {
     // 1. Set API version
-    fdb.FDB.selectMaxApiVersion();
+    print(selectMaxApiVersion());
 
-    // 2. Set network options
-    // Network.setXXX();
-    // ...
+    // 2. Set network options, e.g.
+    // setBuggifySectionActivatedProbability();
 
-    // 3. Start network
-    await fdb.Network.startNetwork();
+    // 3. Start network and wait till it's started
+    await startNetwork();
 
     // 4. Open one or several(!) Databases
-    fdb.Database db = fdb.FDB.openDatabase();
+    Database db = openDatabase();
     print(db);
 
     // 5. Do your database stuff
     // db['key'] = 'value';
     // ...
-    print('waiting...');
-    await Future.delayed(Duration(seconds: 5));
+    print('doing some db stuff...');
+    sleep(Duration(seconds: 1));
 
     // 6. Stop Network
-    fdb.Network.stopNetwork();
-  } on fdb.FDBException catch (err, s) {
-    print('There was an error!');
-    print(s);
+    stopNetwork();
+  } on FDBException catch (err, s) {
+    print('There was an FDB error!');
     print(err);
     print(err.errorCode);
+    print(s);
+  } catch (e) {
+    print(e);
   }
 }

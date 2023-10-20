@@ -4,11 +4,5 @@ dart run ffigen --config ffigen.yaml
 ```
 
 TODO:
-- Remove static crap
-- create classes for enums
-- utis for string pointer conversion and the like
-
-StateMachine necessary or does FDB return appropriate error messages?
-  - APIVersion must be called first
-  - Setting network options must be called before calling SetupNetwork().
-  - Calling runNetwork() must be called after SetupNetwork().
+- create classes for enums and offer generic function for setting options, e.g. in network and database
+- utils for string pointer conversion and the like?
