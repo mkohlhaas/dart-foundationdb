@@ -26,7 +26,7 @@ bool isErrorRetryableNotCommitted(int errorCode) {
   return fdbc.fdb_error_predicate(FDBErrorPredicate.FDB_ERROR_PREDICATE_RETRYABLE_NOT_COMMITTED, errorCode) != 0;
 }
 
-FDBC _initLibrary() {
+FdbC _initLibrary() {
   try {
     String sharedLib = switch (Platform.operatingSystem) {
       'linux' => 'libfdb_c.so',
@@ -36,7 +36,7 @@ FDBC _initLibrary() {
     if (SysInfo.kernelArchitecture != ProcessorArchitecture.x86_64) {
       throw Exception("FoundationDB is only supported on X86_64 and AMD64 architectures.");
     }
-    return FDBC(DynamicLibrary.open(sharedLib));
+    return FdbC(DynamicLibrary.open(sharedLib));
   } catch (err) {
     print(err);
     exit(1);

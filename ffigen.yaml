@@ -1,4 +1,4 @@
-name: FDBC
+name: FdbC
 description: FoundationDB bindings
 output: lib/src/fdbc.dart
 headers:
