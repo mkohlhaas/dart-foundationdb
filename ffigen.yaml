@@ -1,6 +1,6 @@
 name: 'FDBC'
 description: 'FoundationDB bindings'
-output: 'lib/src/fdb/fdbc.dart'
+output: 'lib/src/fdbc.dart'
 headers:
   entry-points:
     - '/usr/include/foundationdb/fdb_c.h'

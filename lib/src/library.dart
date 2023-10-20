@@ -2,8 +2,9 @@ import 'dart:ffi';
 import 'dart:io' show Platform, exit;
 
 import 'package:ffi/ffi.dart';
-import 'package:foundationdb/foundationdb.dart';
 import 'package:system_info2/system_info2.dart';
+
+import '../foundationdb.dart';
 
 final fdbc = _initLibrary();
 

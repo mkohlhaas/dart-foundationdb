@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:isolate';
 
-import 'package:foundationdb/foundationdb.dart';
+import '../foundationdb.dart' as fdb;
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 
@@ -28,11 +28,11 @@ class Network {
 
   // Must be called after fdb_select_api_version() (and zero or more calls to fdb_network_set_option()) and before any other function in this API. fdb_setup_network() can only be called once.
   static void setupNetwork() {
-    handleError(fdbc.fdb_setup_network());
+    fdb.handleError(fdb.fdbc.fdb_setup_network());
   }
 
   static void _setOption(int networkOption) {
-    handleError(fdbc.fdb_network_set_option(
+    fdb.handleError(fdb.fdbc.fdb_network_set_option(
       networkOption,
       nullptr,
       0,
@@ -42,7 +42,7 @@ class Network {
   static void _setIntOption(int networkOption, int optionValue) {
     final optionValueC = calloc<Int64>();
     try {
-      handleError(fdbc.fdb_network_set_option(
+      fdb.handleError(fdb.fdbc.fdb_network_set_option(
         networkOption,
         optionValueC.cast(),
         64,
@@ -55,7 +55,7 @@ class Network {
   static void _setStringOption(int networkOption, String optionValue) {
     final optionValueC = optionValue.toNativeUtf8();
     try {
-      handleError(fdbc.fdb_network_set_option(
+      fdb.handleError(fdb.fdbc.fdb_network_set_option(
         networkOption,
         optionValueC.cast(),
         optionValue.length,
@@ -72,11 +72,11 @@ class Network {
         _receivePort.close();
       }
     });
-    handleError(fdbc.fdb_stop_network());
+    fdb.handleError(fdb.fdbc.fdb_stop_network());
   }
 
   static void runNetwork() {
-    handleError(fdbc.fdb_run_network());
+    fdb.handleError(fdb.fdbc.fdb_run_network());
   }
 
   /// Enables trace output to a file in a directory of the clients choosing */

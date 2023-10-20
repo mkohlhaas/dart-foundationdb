@@ -1,4 +1,4 @@
-import 'package:foundationdb/foundationdb.dart';
+import '../foundationdb.dart';
 import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 

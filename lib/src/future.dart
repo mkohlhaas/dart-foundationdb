@@ -1,6 +1,6 @@
 // See foundationdb/bindings/go/src/fdb/futures.go !!!
 
-import 'package:foundationdb/foundationdb.dart';
+import '../foundationdb.dart';
 
 class Future {}
 

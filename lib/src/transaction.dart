@@ -1,4 +1,4 @@
-import 'package:foundationdb/foundationdb.dart';
+import '../foundationdb.dart';
 
 class Transaction {
   Database? database;

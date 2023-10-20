@@ -2,7 +2,7 @@ import 'dart:ffi';
 import 'dart:io';
 import 'package:ffi/ffi.dart';
 
-import 'package:foundationdb/foundationdb.dart';
+import '../foundationdb.dart';
 
 class FDB {
   static int? _selectedApiVersion;
