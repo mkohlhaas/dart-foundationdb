@@ -6,3 +6,4 @@ dart run ffigen --config ffigen.yaml
 TODO:
 - create classes for enums and offer generic function for setting options, e.g. in network and database
 - utils for string pointer conversion and the like?
+- check mallocs/callocs and toNativeUtf8() for failure to allocate memory

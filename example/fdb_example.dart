@@ -21,7 +21,7 @@ main() async {
     // db['key'] = 'value';
     // ...
     print('doing some db stuff...');
-    sleep(Duration(seconds: 1));
+    sleep(Duration(seconds: 2));
 
     // 6. Stop Network
     stopNetwork();

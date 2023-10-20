@@ -339,36 +339,36 @@ void stopNetwork() {
   handleError(fdbc.fdb_stop_network());
 }
 
-void _setIntOption(int networkOption, int optionValue) {
-  final optionValueC = calloc<Int64>().cast<Uint8>();
+void _setIntOption(int option, int value) {
+  final valueC = calloc<Int64>().cast<Uint8>();
   try {
     handleError(fdbc.fdb_network_set_option(
-      networkOption,
-      optionValueC,
-      8,
+      option,
+      valueC,
+      sizeOf<Int64>(),
     ));
   } finally {
-    calloc.free(optionValueC);
+    calloc.free(valueC);
   }
 }
 
-void _setOption(int networkOption) {
+void _setOption(int option) {
   handleError(fdbc.fdb_network_set_option(
-    networkOption,
+    option,
     nullptr,
     0,
   ));
 }
 
-void _setStringOption(int networkOption, String optionValue) {
-  final optionValueC = optionValue.toNativeUtf8().cast<Uint8>();
+void _setStringOption(int option, String value) {
+  final valueC = value.toNativeUtf8();
   try {
     handleError(fdbc.fdb_network_set_option(
-      networkOption,
-      optionValueC,
-      optionValue.length,
+      option,
+      valueC.cast<Uint8>(),
+      value.length,
     ));
   } finally {
-    calloc.free(optionValueC);
+    calloc.free(valueC);
   }
 }
