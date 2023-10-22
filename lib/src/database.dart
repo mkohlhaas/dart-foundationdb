@@ -30,35 +30,35 @@ Database _open(String connect, DbCreateFun createDbFun) {
   }
 }
 
+// operator [](key) {}
+// operator []=(key, value) {}
+// add(key, param) {}
+// bitAnd(key, param) {}
+// bitOr(key, param) {}
+// bitXor(key, param) {}
+// clear(key) {}
+// clearAndWatch(key) {}
+// clearRange(begin, end) {}
+// clearRangeStartWith(prefix) {}
+// close() {}
+// doReadTransaction() {}
+// doTransaction() {}
+// doTxn() {}
+// get(key) {}
+// getAndWatch(key) {}
+// getKey(keyselector) {}
+// getRange(begin, end, options) {}
+// getRangeStartWith(prefix, options) {}
+// keyEncoding() {}
+// openTenant() {}
+// rebootWorker() {}
+// set(key, value) {}
+// setAndWatch(key, value) {}
+
 class Database {
   final Pointer<FDB_database> _database;
 
   Database(this._database);
-
-  // operator [](key) {}
-  // operator []=(key, value) {}
-  // add(key, param) {}
-  // bitAnd(key, param) {}
-  // bitOr(key, param) {}
-  // bitXor(key, param) {}
-  // clear(key) {}
-  // clearAndWatch(key) {}
-  // clearRange(begin, end) {}
-  // clearRangeStartWith(prefix) {}
-  // close() {}
-  // doReadTransaction() {}
-  // doTransaction() {}
-  // doTxn() {}
-  // get(key) {}
-  // getAndWatch(key) {}
-  // getKey(keyselector) {}
-  // getRange(begin, end, options) {}
-  // getRangeStartWith(prefix, options) {}
-  // keyEncoding() {}
-  // openTenant() {}
-  // rebootWorker() {}
-  // set(key, value) {}
-  // setAndWatch(key, value) {}
 
   Transaction createTransaction() {
     final ppTransaction = calloc<Pointer<FDB_transaction>>();
@@ -236,7 +236,7 @@ class Database {
       handleError(fdbc.fdb_database_set_option(
         _database,
         option,
-        valueC.cast<Uint8>(),
+        valueC.cast(),
         value.length,
       ));
     } finally {

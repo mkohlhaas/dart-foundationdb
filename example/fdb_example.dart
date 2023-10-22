@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:foundationdb/foundationdb.dart';
 
 main() async {
@@ -15,22 +13,38 @@ main() async {
 
     // 4. Open one or several(!) Databases
     Database db = openDatabase();
-    print(db);
 
     // 5. Do your database stuff
-    // db['key'] = 'value';
-    // ...
     print('doing some db stuff...');
-    sleep(Duration(seconds: 2));
+    var tr = db.createTransaction();
+    var key = 'hello';
+    tr.set(key, 'from Dart 01');
+    tr.commit();
+    tr = db.createTransaction();
+    print('$key ${tr.get(key, false)}');
+
+    var key1 = 'hallo';
+    tr = db.createTransaction();
+    tr[key1] = 'from Dart';
+    print('$key1 ${tr[key1]}');
+    tr.commit();
+
+    tr = db.createTransaction();
+    print(tr['zĵasdâfuĵ']);
+    KeySelector ks = 'ĵuiz'.firstGreaterThan;
+    print(tr.getKey(ks));
+    print(ks.key);
 
     // 6. Stop Network
-    stopNetwork();
   } on FDBException catch (err, s) {
     print('There was an FDB error!');
     print(err);
     print(err.errorCode);
     print(s);
-  } catch (e) {
+  } catch (e, s) {
     print(e);
+    print(s);
+  } finally {
+    stopNetwork();
   }
 }

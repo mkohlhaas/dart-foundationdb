@@ -365,7 +365,7 @@ void _setStringOption(int option, String value) {
   try {
     handleError(fdbc.fdb_network_set_option(
       option,
-      valueC.cast<Uint8>(),
+      valueC.cast(),
       value.length,
     ));
   } finally {
