@@ -320,12 +320,11 @@ async.Future<void> startNetwork() async {
   if (!_isNetworkStarted) {
     _isNetworkStarted = true;
     setupNetwork();
-    Isolate isolate = await Isolate.spawn<int>(
+    await Isolate.spawn<int>(
       isoStartNetwork,
       0,
       onExit: _receivePort.sendPort,
     );
-    print(isolate);
   }
 }
 

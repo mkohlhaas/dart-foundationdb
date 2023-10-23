@@ -18,170 +18,8 @@ class Transaction {
 
   void operator []=(String key, String value) => set(key, value);
 
-  void onError(int errorCode) {
-    final pFuture = fdbc.fdb_transaction_on_error(_txn, errorCode);
-    handleError(fdbc.fdb_future_block_until_ready(pFuture));
-    fdbc.fdb_future_destroy(pFuture);
-  }
-
-  // TODO: implement iterable and iterator interfaces
-  // https://stackoverflow.com/questions/23984946/how-to-best-implement-a-partition-function-for-iterables/77303044#77303044
-  (bool, List<(String, String)>) getRange(
-    KeySelector begin,
-    KeySelector end,
-    int limit,
-    int iteration,
-    bool snapshot,
-    bool reverse,
-  ) {
-    final keyBegin = begin.key.toNativeUtf8();
-    final keyEnd = end.key.toNativeUtf8();
-    final kv = calloc<Pointer<keyvalue>>();
-    final count = calloc<Int>();
-    final more = calloc<Int>();
-    try {
-      final pFuture = fdbc.fdb_transaction_get_range(
-        _txn,
-        keyBegin.cast(),
-        keyBegin.length,
-        begin.orEqual,
-        begin.offset,
-        keyEnd.cast(),
-        keyEnd.length,
-        end.orEqual,
-        end.offset,
-        limit,
-        0, // target_bytes
-        FDBStreamingMode.FDB_STREAMING_MODE_ITERATOR,
-        iteration,
-        snapshot ? 1 : 0,
-        reverse ? 1 : 0,
-      );
-      handleError(fdbc.fdb_future_block_until_ready(pFuture));
-      handleError(fdbc.fdb_future_get_keyvalue_array(pFuture, kv, count, more));
-      fdbc.fdb_future_destroy(pFuture);
-      final res = <(String, String)>[];
-      for (var i = 0; i < count.value; i++) {
-        res.add((
-          kv.value.ref.key.cast<Utf8>().toDartString(length: kv.value.ref.key_length),
-          kv.value.ref.value.cast<Utf8>().toDartString(length: kv.value.ref.value_length)
-        ));
-      }
-      return (more.value == 0 ? false : true, res);
-    } finally {
-      calloc.free(keyBegin);
-      calloc.free(keyEnd);
-      calloc.free(kv);
-      calloc.free(count);
-      calloc.free(more);
-    }
-  }
-
-  void watch(String key) {
-    final keyC = key.toNativeUtf8();
-    try {
-      final pFuture = fdbc.fdb_transaction_watch(
-        _txn,
-        keyC.cast(),
-        keyC.length,
-      );
-      handleError(fdbc.fdb_future_block_until_ready(pFuture));
-      fdbc.fdb_future_destroy(pFuture);
-    } finally {
-      calloc.free(keyC);
-    }
-  }
-
-  void setReadVersion(int version) {
-    fdbc.fdb_transaction_set_read_version(_txn, version);
-  }
-
-  int getReadVersion() {
-    final version = calloc<Int64>();
-    try {
-      final pFuture = fdbc.fdb_transaction_get_approximate_size(_txn);
-      handleError(fdbc.fdb_future_block_until_ready(pFuture));
-      handleError(fdbc.fdb_future_get_int64(pFuture, version));
-      fdbc.fdb_future_destroy(pFuture);
-      return version.value;
-    } finally {
-      calloc.free(version);
-    }
-  }
-
-  int getApproximateSize() {
-    final size = calloc<Int64>();
-    try {
-      final pFuture = fdbc.fdb_transaction_get_approximate_size(_txn);
-      handleError(fdbc.fdb_future_block_until_ready(pFuture));
-      handleError(fdbc.fdb_future_get_int64(pFuture, size));
-      fdbc.fdb_future_destroy(pFuture);
-      return size.value;
-    } finally {
-      calloc.free(size);
-    }
-  }
-
-  int getCommittedVersion() {
-    final version = calloc<Int64>();
-    try {
-      handleError(fdbc.fdb_transaction_get_committed_version(_txn, version));
-      return version.value;
-    } finally {
-      calloc.free(version);
-    }
-  }
-
-  void _addConflictKey(String key, int type) {
-    _addConflictRange(key, key + 0.toRadixString(16), type);
-  }
-
-  int getEstimatedRangeSizeBytes(String begin, String end) {
-    final size = calloc<Int64>();
-    final keyBegin = begin.toNativeUtf8();
-    final keyEnd = end.toNativeUtf8();
-    try {
-      final pFuture = fdbc.fdb_transaction_get_estimated_range_size_bytes(
-        _txn,
-        keyBegin.cast(),
-        keyBegin.length,
-        keyEnd.cast(),
-        keyEnd.length,
-      );
-      handleError(fdbc.fdb_future_block_until_ready(pFuture));
-      handleError(fdbc.fdb_future_get_int64(pFuture, size));
-      fdbc.fdb_future_destroy(pFuture);
-      return size.value;
-    } finally {
-      calloc.free(keyBegin);
-      calloc.free(keyEnd);
-    }
-  }
-
-  void _addConflictRange(String begin, String end, int type) {
-    final keyBegin = begin.toNativeUtf8();
-    final keyEnd = end.toNativeUtf8();
-    try {
-      handleError(fdbc.fdb_transaction_add_conflict_range(
-        _txn,
-        keyBegin.cast(),
-        keyBegin.length,
-        keyEnd.cast(),
-        keyEnd.length,
-        type,
-      ));
-    } finally {
-      calloc.free(keyBegin);
-      calloc.free(keyEnd);
-    }
-  }
-
-  void addWriteConflictKey(String key) {
-    _addConflictKey(key, FDBConflictRangeType.FDB_CONFLICT_RANGE_TYPE_WRITE);
-  }
-
-  void addWriteConflictRange(String begin, String end) {
-    _addConflictRange(begin, end, FDBConflictRangeType.FDB_CONFLICT_RANGE_TYPE_WRITE);
+  void add(String key, int value) {
+    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_ADD);
   }
 
   void addReadConflictKey(String key) {
@@ -192,8 +30,57 @@ class Transaction {
     _addConflictRange(begin, end, FDBConflictRangeType.FDB_CONFLICT_RANGE_TYPE_READ);
   }
 
+  void addWriteConflictKey(String key) {
+    _addConflictKey(key, FDBConflictRangeType.FDB_CONFLICT_RANGE_TYPE_WRITE);
+  }
+
+  void addWriteConflictRange(String begin, String end) {
+    _addConflictRange(begin, end, FDBConflictRangeType.FDB_CONFLICT_RANGE_TYPE_WRITE);
+  }
+
+  void appendIfFits(String key, int value) {
+    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_APPEND_IF_FITS);
+  }
+
+  void bitAnd(String key, int value) {
+    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_AND);
+  }
+
+  void bitOr(String key, int value) {
+    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_OR);
+  }
+
+  void bitXor(String key, int value) {
+    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_XOR);
+  }
+
+  void byteMax(String key, int value) {
+    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_BYTE_MAX);
+  }
+
+  void byteMin(String key, int value) {
+    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_BYTE_MIN);
+  }
+
+  void cancel() {
+    fdbc.fdb_transaction_cancel(_txn);
+  }
+
+  void clear(String key) {
+    final keyC = key.toNativeUtf8();
+    try {
+      fdbc.fdb_transaction_clear(
+        _txn,
+        keyC.cast(),
+        keyC.length,
+      );
+    } finally {
+      calloc.free(keyC);
+    }
+  }
+
   void clearRange(String begin, [String? end]) {
-    end ??= 0xff.toRadixString(16);
+    end ??= 0xFF.toRadixString(16);
     final keyBegin = begin.toNativeUtf8();
     final keyEnd = end.toNativeUtf8();
     try {
@@ -214,117 +101,36 @@ class Transaction {
     clearRange(prefix);
   }
 
-  void reset() {
-    fdbc.fdb_transaction_reset(_txn);
-  }
-
-  void cancel() {
-    fdbc.fdb_transaction_cancel(_txn);
-  }
-
-  void clear(String key) {
-    final keyC = key.toNativeUtf8();
-    try {
-      fdbc.fdb_transaction_clear(
-        _txn,
-        keyC.cast(),
-        keyC.length,
-      );
-    } finally {
-      calloc.free(keyC);
-    }
-  }
-
-  void _atomic(String key, int value, int op) {
-    final keyC = key.toNativeUtf8();
-    try {
-      fdbc.fdb_transaction_atomic_op(
-        _txn,
-        keyC.cast(),
-        keyC.length,
-        pack(value),
-        sizeOf<Uint64>(),
-        op,
-      );
-    } finally {
-      calloc.free(keyC);
-    }
-  }
-
-  void add(String key, int value) {
-    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_ADD);
-  }
-
-  void bitAnd(String key, int value) {
-    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_AND);
-  }
-
-  void bitOr(String key, int value) {
-    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_OR);
-  }
-
-  void bitXor(String key, int value) {
-    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_XOR);
-  }
-
-  void min(String key, int value) {
-    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_MIN);
-  }
-
-  void max(String key, int value) {
-    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_MAX);
-  }
-
-  void byteMin(String key, int value) {
-    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_BYTE_MIN);
-  }
-
-  void byteMax(String key, int value) {
-    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_BYTE_MAX);
-  }
-
-  void setVersionstampedKey(String key, int value) {
-    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_SET_VERSIONSTAMPED_KEY);
-  }
-
-  void setVersionstampedValue(String key, int value) {
-    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_SET_VERSIONSTAMPED_VALUE);
-  }
-
-  void appendIfFits(String key, int value) {
-    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_APPEND_IF_FITS);
+  void commit() {
+    final f = fdbc.fdb_transaction_commit(_txn);
+    handleError(fdbc.fdb_future_block_until_ready(f));
+    fdbc.fdb_future_destroy(f);
   }
 
   void compareAndClear(String key, int value) {
     _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_COMPARE_AND_CLEAR);
   }
 
-  void commit() {
-    final pFuture = fdbc.fdb_transaction_commit(_txn);
-    handleError(fdbc.fdb_future_block_until_ready(pFuture));
-    fdbc.fdb_future_destroy(pFuture);
-  }
-
   String? get(String key, [bool isSnapshot = false]) {
+    String? res;
     final keyC = key.toNativeUtf8();
     final present = calloc<Int>();
     final value = calloc<Pointer<Uint8>>();
     final valueLength = calloc<Int>();
     try {
-      final pFuture = fdbc.fdb_transaction_get(
+      final f = fdbc.fdb_transaction_get(
         _txn,
         keyC.cast(),
         keyC.length,
         isSnapshot ? 1 : 0,
       );
-      handleError(fdbc.fdb_future_block_until_ready(pFuture));
-      handleError(fdbc.fdb_future_get_value(pFuture, present, value, valueLength));
-      fdbc.fdb_future_destroy(pFuture);
+      handleError(fdbc.fdb_future_block_until_ready(f));
+      handleError(fdbc.fdb_future_get_value(f, present, value, valueLength));
       if (present.value != 0) {
-        return value.value.cast<Utf8>().toDartString(length: valueLength.value);
-      } else {
-        return null;
+        res = value.value.cast<Utf8>().toDartString(length: valueLength.value);
       }
+      fdbc.fdb_future_destroy(f);
+      return res;
     } finally {
       calloc.free(keyC);
       calloc.free(present);
@@ -333,18 +139,50 @@ class Transaction {
     }
   }
 
-  String getVersionstamp() {
-    final key = calloc<Pointer<Uint8>>();
-    final keyLength = calloc<Int>();
+  int getApproximateSize() {
+    final size = calloc<Int64>();
     try {
-      final pFuture = fdbc.fdb_transaction_get_versionstamp(_txn);
-      handleError(fdbc.fdb_future_block_until_ready(pFuture));
-      handleError(fdbc.fdb_future_get_key(pFuture, key, keyLength));
-      fdbc.fdb_future_destroy(pFuture);
-      return key.value.cast<Utf8>().toDartString(length: keyLength.value);
+      final f = fdbc.fdb_transaction_get_approximate_size(_txn);
+      handleError(fdbc.fdb_future_block_until_ready(f));
+      handleError(fdbc.fdb_future_get_int64(f, size));
+      int res = size.value;
+      fdbc.fdb_future_destroy(f);
+      return res;
     } finally {
-      calloc.free(key);
-      calloc.free(keyLength);
+      calloc.free(size);
+    }
+  }
+
+  int getCommittedVersion() {
+    final version = calloc<Int64>();
+    try {
+      handleError(fdbc.fdb_transaction_get_committed_version(_txn, version));
+      return version.value;
+    } finally {
+      calloc.free(version);
+    }
+  }
+
+  int getEstimatedRangeSizeBytes(String begin, String end) {
+    final size = calloc<Int64>();
+    final keyBegin = begin.toNativeUtf8();
+    final keyEnd = end.toNativeUtf8();
+    try {
+      final f = fdbc.fdb_transaction_get_estimated_range_size_bytes(
+        _txn,
+        keyBegin.cast(),
+        keyBegin.length,
+        keyEnd.cast(),
+        keyEnd.length,
+      );
+      handleError(fdbc.fdb_future_block_until_ready(f));
+      handleError(fdbc.fdb_future_get_int64(f, size));
+      int res = size.value;
+      fdbc.fdb_future_destroy(f);
+      return res;
+    } finally {
+      calloc.free(keyBegin);
+      calloc.free(keyEnd);
     }
   }
 
@@ -354,7 +192,7 @@ class Transaction {
     final key = calloc<Pointer<Uint8>>();
     final keyLength = calloc<Int>();
     try {
-      final pFuture = fdbc.fdb_transaction_get_key(
+      final f = fdbc.fdb_transaction_get_key(
         _txn,
         keyC.cast(),
         keyC.length,
@@ -362,21 +200,73 @@ class Transaction {
         keySel.offset,
         isSnapshot ? 1 : 0,
       );
-      handleError(fdbc.fdb_future_block_until_ready(pFuture));
-      handleError(fdbc.fdb_future_get_key(pFuture, key, keyLength));
+      handleError(fdbc.fdb_future_block_until_ready(f));
+      handleError(fdbc.fdb_future_get_key(f, key, keyLength));
       print('length: ${keyLength.value}');
       print('char: ${key.value.value}');
       // system metadata
       if (key.value.value != 0xFF) {
         result = key.value.cast<Utf8>().toDartString(length: keyLength.value);
       }
-      fdbc.fdb_future_destroy(pFuture);
+      fdbc.fdb_future_destroy(f);
       return result;
     } finally {
       calloc.free(keyC);
       calloc.free(key);
       calloc.free(keyLength);
     }
+  }
+
+  Iterable<(String, String)> getRange(KeySelector begin, KeySelector end) {
+    return TransactionIterable(_txn, begin, end);
+  }
+
+  int getReadVersion() {
+    final version = calloc<Int64>();
+    try {
+      final f = fdbc.fdb_transaction_get_approximate_size(_txn);
+      handleError(fdbc.fdb_future_block_until_ready(f));
+      handleError(fdbc.fdb_future_get_int64(f, version));
+      int res = version.value;
+      fdbc.fdb_future_destroy(f);
+      return res;
+    } finally {
+      calloc.free(version);
+    }
+  }
+
+  String getVersionstamp() {
+    final key = calloc<Pointer<Uint8>>();
+    final keyLength = calloc<Int>();
+    try {
+      final f = fdbc.fdb_transaction_get_versionstamp(_txn);
+      handleError(fdbc.fdb_future_block_until_ready(f));
+      handleError(fdbc.fdb_future_get_key(f, key, keyLength));
+      String res = key.value.cast<Utf8>().toDartString(length: keyLength.value);
+      fdbc.fdb_future_destroy(f);
+      return res;
+    } finally {
+      calloc.free(key);
+      calloc.free(keyLength);
+    }
+  }
+
+  void max(String key, int value) {
+    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_MAX);
+  }
+
+  void min(String key, int value) {
+    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_MIN);
+  }
+
+  void onError(int errorCode) {
+    final f = fdbc.fdb_transaction_on_error(_txn, errorCode);
+    handleError(fdbc.fdb_future_block_until_ready(f));
+    fdbc.fdb_future_destroy(f);
+  }
+
+  void reset() {
+    fdbc.fdb_transaction_reset(_txn);
   }
 
   void set(String key, String value) {
@@ -617,6 +507,10 @@ class Transaction {
     _setOption(302);
   }
 
+  void setReadVersion(int version) {
+    fdbc.fdb_transaction_set_read_version(_txn, version);
+  }
+
   /// Reads performed by a transaction will not see any prior mutations that occured in that transaction, instead seeing the value which was in the database at the transaction's read version. This option may provide a small performance benefit for the client, but also disables a number of client-side optimizations which are beneficial for transactions which tend to read and write the same keys within a single transaction. It is an error to set this option after performing any reads or writes on the transaction. */
   /// /* Parameter: Option takes no parameter
   void setReadYourWritesDisable() {
@@ -725,6 +619,67 @@ class Transaction {
     _setOption(711);
   }
 
+  void setVersionstampedKey(String key, int value) {
+    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_SET_VERSIONSTAMPED_KEY);
+  }
+
+  void setVersionstampedValue(String key, int value) {
+    _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_SET_VERSIONSTAMPED_VALUE);
+  }
+
+  void watch(String key) {
+    final keyC = key.toNativeUtf8();
+    try {
+      final f = fdbc.fdb_transaction_watch(
+        _txn,
+        keyC.cast(),
+        keyC.length,
+      );
+      handleError(fdbc.fdb_future_block_until_ready(f));
+      fdbc.fdb_future_destroy(f);
+    } finally {
+      calloc.free(keyC);
+    }
+  }
+
+  void _addConflictKey(String key, int type) {
+    _addConflictRange(key, key + 0.toRadixString(16), type);
+  }
+
+  void _addConflictRange(String begin, String end, int type) {
+    final keyBegin = begin.toNativeUtf8();
+    final keyEnd = end.toNativeUtf8();
+    try {
+      handleError(fdbc.fdb_transaction_add_conflict_range(
+        _txn,
+        keyBegin.cast(),
+        keyBegin.length,
+        keyEnd.cast(),
+        keyEnd.length,
+        type,
+      ));
+    } finally {
+      calloc.free(keyBegin);
+      calloc.free(keyEnd);
+    }
+  }
+
+  void _atomic(String key, int value, int op) {
+    final keyC = key.toNativeUtf8();
+    try {
+      fdbc.fdb_transaction_atomic_op(
+        _txn,
+        keyC.cast(),
+        keyC.length,
+        pack(value),
+        sizeOf<Uint64>(),
+        op,
+      );
+    } finally {
+      calloc.free(keyC);
+    }
+  }
+
   void _setIntOption(int option, int value) {
     final valueC = calloc<Int64>().cast<Uint8>();
     try {
@@ -760,5 +715,119 @@ class Transaction {
     } finally {
       calloc.free(valueC);
     }
+  }
+}
+
+class TransactionIterable extends Iterable<(String, String)> {
+  final Pointer<FDB_transaction> _txn;
+  final KeySelector _begin;
+  final KeySelector _end;
+
+  TransactionIterable(this._txn, this._begin, this._end);
+
+  @override
+  Iterator<(String, String)> get iterator => TransactionIterator(_txn, _begin, _end);
+}
+
+// (un-)pack functions:
+//
+// for (var item in ['String', nullString, 2341, 45.4]) {
+//   switch (item) {
+//     case _ when item is double:
+//       print(item);
+//     case _ when item == null:
+//       print(item);
+//     case _ when item is int:
+//       print(item);
+//     case _ when item is bool:
+//       print(item);
+//     case _ when item is String:
+//       print(item);
+//   }
+// }
+
+class TransactionIterator implements Iterator<(String, String)> {
+  final Pointer<FDB_transaction> _txn;
+  final KeySelector _begin;
+  final KeySelector _end;
+  final kvPairs = <(String, String)>[];
+  bool _more = true;
+  int _iteration = 1;
+
+  TransactionIterator(this._txn, this._begin, this._end);
+
+  @override
+  (String, String) get current => kvPairs.removeAt(0);
+
+  (bool, List<(String, String)>)? getRange(
+    KeySelector begin,
+    KeySelector end,
+    int iteration,
+    bool snapshot,
+    bool reverse,
+  ) {
+    final begKey = begin.key.toNativeUtf8();
+    final endKey = end.key.toNativeUtf8();
+    final kv = calloc<Pointer<keyvalue>>();
+    final count = calloc<Int>();
+    final more = calloc<Int>();
+    try {
+      final f = fdbc.fdb_transaction_get_range(
+        _txn,
+        begKey.cast(),
+        begKey.length,
+        begin.orEqual,
+        begin.offset,
+        endKey.cast(),
+        endKey.length,
+        end.orEqual,
+        end.offset,
+        0, // limit must be zero for iterator streaming mode!!!
+        0, // target_bytes
+        FDBStreamingMode.FDB_STREAMING_MODE_ITERATOR,
+        iteration,
+        snapshot ? 1 : 0,
+        reverse ? 1 : 0,
+      );
+      handleError(fdbc.fdb_future_block_until_ready(f));
+      handleError(fdbc.fdb_future_get_keyvalue_array(f, kv, count, more));
+      var lst = <(String, String)>[];
+      for (var i = 0; i < count.value; i++) {
+        if (kv.value.ref.key.value != 0xFF) {
+          String key =
+              kv.value.elementAt(i).ref.key.cast<Utf8>().toDartString(length: kv.value.elementAt(i).ref.key_length);
+          String value =
+              kv.value.elementAt(i).ref.value.cast<Utf8>().toDartString(length: kv.value.elementAt(i).ref.value_length);
+          lst.add((key, value));
+        }
+      }
+      fdbc.fdb_future_destroy(f);
+      return (more.value == 0 ? false : true, lst);
+    } finally {
+      calloc.free(begKey);
+      calloc.free(endKey);
+      calloc.free(kv);
+      calloc.free(count);
+      calloc.free(more);
+    }
+  }
+
+  @override
+  bool moveNext() {
+    bool more;
+    List<(String, String)> pairs;
+
+    if (_more) {
+      final res = getRange(_begin, _end, _iteration++, false, false);
+      if (res == null) {
+        print('more: false');
+        return false;
+      } else {
+        (more, pairs) = res;
+        kvPairs.addAll(pairs);
+        _more = more;
+      }
+    }
+    return kvPairs.isNotEmpty;
   }
 }
