@@ -30,6 +30,7 @@ Database _open(String connect, DbCreateFun createDbFun) {
   }
 }
 
+// TODO:
 // operator [](key) {}
 // operator []=(key, value) {}
 // add(key, param) {}

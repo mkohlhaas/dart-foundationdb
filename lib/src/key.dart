@@ -6,6 +6,8 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 
+// TODO: clean up
+
 extension Uint8ListStr on String {
   Uint8List get uint8list => convertStringToUint8List(this);
 }
