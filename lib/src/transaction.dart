@@ -243,8 +243,14 @@ class Transaction {
     }
   }
 
-  Iterable<(String, String)> getRange(KeySelector begin, KeySelector end) {
-    return TransactionIterable(_txn, begin, end);
+  Iterable<(String, String)> getRange(
+    KeySelector begin,
+    KeySelector end, {
+    int limit = 0,
+    bool reverse = false,
+    bool snapshot = false,
+  }) {
+    return TransactionIterable(_txn, begin, end, limit, reverse, snapshot);
   }
 
   int getReadVersion() {
@@ -750,35 +756,38 @@ class TransactionIterable extends Iterable<(String, String)> {
   final Pointer<FDB_transaction> _txn;
   final KeySelector _begin;
   final KeySelector _end;
+  final int _limit;
+  final bool _reverse;
+  final bool _snapshot;
 
-  TransactionIterable(this._txn, this._begin, this._end);
+  TransactionIterable(this._txn, this._begin, this._end, this._limit, this._reverse, this._snapshot);
 
   @override
-  Iterator<(String, String)> get iterator => TransactionIterator(_txn, _begin, _end);
+  Iterator<(String, String)> get iterator => TransactionIterator(_txn, _begin, _end, _limit, _reverse, _snapshot);
 }
 
 class TransactionIterator implements Iterator<(String, String)> {
   final Pointer<FDB_transaction> _txn;
-  final KeySelector _begin;
-  final KeySelector _end;
+  KeySelector _begin;
+  KeySelector _end;
   final _kvPairs = <(String, String)>[];
   bool _more = true;
   int _iteration = 1;
+  final int _limit;
+  final bool _reverse;
+  final bool _snapshot;
 
-  TransactionIterator(this._txn, this._begin, this._end);
+  TransactionIterator(this._txn, this._begin, this._end, this._limit, this._reverse, this._snapshot);
 
   @override
   (String, String) get current => _kvPairs.removeAt(0);
 
-  (bool, List<(String, String)>) getRange(
-    KeySelector begin,
-    KeySelector end,
-    int iteration,
+  (bool, List<(String, String)>) _getRange(
     bool snapshot,
     bool reverse,
   ) {
-    final begKey = begin.key.toNativeUtf8();
-    final endKey = end.key.toNativeUtf8();
+    final begKey = _begin.key.toNativeUtf8();
+    final endKey = _end.key.toNativeUtf8();
     final kv = calloc<Pointer<keyvalue>>();
     final count = calloc<Int>();
     final more = calloc<Int>();
@@ -787,29 +796,32 @@ class TransactionIterator implements Iterator<(String, String)> {
         _txn,
         begKey.cast(),
         begKey.length,
-        begin.orEqual,
-        begin.offset,
+        _begin.orEqual,
+        _begin.offset,
         endKey.cast(),
         endKey.length,
-        end.orEqual,
-        end.offset,
-        0, // limit must be zero for iterator streaming mode!!!
+        _end.orEqual,
+        _end.offset,
+        _limit, // limit
         0, // target_bytes
         FDBStreamingMode.FDB_STREAMING_MODE_ITERATOR,
-        iteration,
-        snapshot ? 1 : 0,
-        reverse ? 1 : 0,
+        _iteration++,
+        _snapshot ? 1 : 0,
+        _reverse ? 1 : 0,
       );
       handleError(fdbc.fdb_future_block_until_ready(f));
       handleError(fdbc.fdb_future_get_keyvalue_array(f, kv, count, more));
-      // print(more.value);
-      print('count: ${count.value}');
       var lst = <(String, String)>[];
       for (var i = 0; i < count.value; i++) {
         if (kv.value.ref.key.value.isNotSystemKey) {
           final ref = kv.value.elementAt(i).ref;
           String key = ref.key.cast<Utf8>().toDartString(length: ref.key_length);
           String value = ref.value.cast<Utf8>().toDartString(length: ref.value_length);
+          if (_reverse) {
+            _end = key.lastLessOrEqual;
+          } else {
+            _begin = key.firstGreaterThan;
+          }
           lst.add((key, value));
         }
       }
@@ -826,14 +838,11 @@ class TransactionIterator implements Iterator<(String, String)> {
 
   @override
   bool moveNext() {
-    if (_more) {
-      final (more, pairs) = getRange(_begin, _end, _iteration++, false, false);
-      print('more: $more');
+    if (_kvPairs.isEmpty && _more) {
+      final (more, pairs) = _getRange(false, false);
       _kvPairs.addAll(pairs);
       _more = more;
-      print(_kvPairs);
     }
-    print(_more);
     return _kvPairs.isNotEmpty;
   }
 }
