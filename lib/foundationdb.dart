@@ -6,7 +6,6 @@ export 'src/database.dart';
 export 'src/directory.dart';
 export 'src/error.dart';
 export 'src/fdbc.dart';
-export 'src/future.dart';
 export 'src/key.dart';
 export 'src/library.dart';
 export 'src/network.dart';
