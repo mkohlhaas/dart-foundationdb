@@ -1,5 +1,13 @@
 class Tuple {}
 
+// TODO:
+// TDD: write tests first
+// https://dart.dev/guides/testing
+// https://docs.flutter.dev/cookbook/testing/unit/introduction
+
+// https://github.com/josephg/fdb-tuple/tree/master/lib
+// ByteData for encoding/decoding
+
 // from go binding
 // const nilCode = 0x00
 // const bytesCode = 0x01

@@ -20,6 +20,14 @@ main() async {
         for (final (key, value) in txn.getRange(beg, end, limit: 20, reverse: true, snapshot: true)) {
           print('$key: $value');
         }
+        print('');
+        for (final (key, value) in txn.getRangeStartsWith('hello')) {
+          print('$key: $value');
+        }
+        print('');
+        for (final (key, value) in txn.getRangeStartsWith('hello', reverse: true)) {
+          print('$key: $value');
+        }
       });
     });
   } on FDBException catch (err, s) {

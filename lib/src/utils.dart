@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 
+import '../foundationdb.dart';
+
 Pointer<Uint8> bytesFromList(List<int> ints) {
   final Pointer<Uint8> ptr = calloc(ints.length);
   final Uint8List list = ptr.asTypedList(ints.length);
@@ -33,4 +35,15 @@ extension Uint8ListStr on String {
 
 extension StrUint8List on Uint8List {
   String get string => convertUint8ListToString(this);
+}
+
+// e.g. strinc('hallo') -> 'hallp'
+String strinc(String key) {
+  Uint8List lst = key.uint8List;
+  while (lst.last == systemkey) {
+    lst.removeLast();
+  }
+  if (lst.isEmpty) throw ArgumentError("Key must contain at least one byte not equal to 0xFF.");
+  lst.last = lst.last + 1;
+  return lst.string;
 }

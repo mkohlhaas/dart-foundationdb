@@ -243,33 +243,20 @@ class Transaction {
     }
   }
 
-  // TODO: getRangeStartsWith
-
-  // You'll need strinc():
-
-  // Ruby:
-  // def strinc(key):
-  //   key = key.rstrip(b"\xff")
-  //   if len(key) == 0:
-  //       raise ValueError("Key must contain at least one byte not equal to 0xFF.")
-  //   return key[:-1] + six.int2byte(ord(key[-1:]) + 1)
-
-  // Python:
-  // def strinc(key):
-  //     key = key.rstrip(b"\xff")
-  //     if len(key) == 0:
-  //         raise ValueError("Key must contain at least one byte not equal to 0xFF.")
-  //     return key[:-1] + six.int2byte(ord(key[-1:]) + 1)
-
-  // use conversion functions from util.dart
-
-  // extension Uint8ListStr on String {
-  //   Uint8List get uint8List => convertStringToUint8List(this);
-  // }
-
-  // extension StrUint8List on Uint8List {
-  //   String get string => convertUint8ListToString(this);
-  // }
+  Iterable<(String, String)> getRangeStartsWith(
+    String prefix, {
+    int limit = 0,
+    bool reverse = false,
+    bool snapshot = false,
+  }) {
+    return getRange(
+      prefix.first,
+      strinc(prefix).last,
+      limit: limit,
+      reverse: reverse,
+      snapshot: snapshot,
+    );
+  }
 
   Iterable<(String, String)> getRange(
     KeySelector begin,

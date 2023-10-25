@@ -1,3 +1,5 @@
+const int systemkey = 0xFF;
+
 class KeySelector {
   String key;
   int orEqual;
@@ -22,8 +24,6 @@ extension AsKeyValue on String {
   KeySelector get lastLessOrEqual => KeySelector(this, 1, 0);
   KeySelector get lastLessThan => KeySelector(this, 0, 0);
 }
-
-const int systemkey = 0xFF;
 
 extension SystemKey on int {
   bool get isNotSystemKey => this != systemkey;
