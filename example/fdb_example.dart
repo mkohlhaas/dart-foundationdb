@@ -38,3 +38,38 @@ main() async {
     stopNetwork();
   }
 }
+
+// main() async {
+//   try {
+//     // 1. Set API version
+//     selectMaxApiVersion();
+//
+//     // 2. Set network options, e.g.
+//     setBuggifySectionActivatedProbability(50);
+//
+//     // 3. Start network and wait till it's started
+//     await startNetwork();
+//
+//     // 4. Open database
+//     withDatabase((Database db) {
+//       withTransaction((Transaction txn) {
+//         final beg = 'h'.firstGreaterOrEqual;
+//         final end = 'i'.lastLessOrEqual;
+//         for (final (key, value) in txn.getRange(beg, end)) {
+//           print('$key: $value');
+//         }
+//       };
+//     };
+//   } on FDBException catch (err, s) {
+//     print('There was an FDB error!');
+//     print(err);
+//     print(err.errorCode);
+//     print(s);
+//   } catch (e, s) {
+//     print(e);
+//     print(s);
+//   } finally {
+//     // 6. Stop Network
+//     stopNetwork();
+//   }
+// }

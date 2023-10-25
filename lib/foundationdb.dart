@@ -10,7 +10,6 @@ export 'src/key.dart';
 export 'src/library.dart';
 export 'src/network.dart';
 export 'src/subspace.dart';
-export 'src/tenant.dart';
 export 'src/transaction.dart';
 export 'src/tuple.dart';
 export 'src/utils.dart';

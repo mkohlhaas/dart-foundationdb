@@ -13,8 +13,6 @@ Database openDatabaseConfig(String connectionString) {
   return _open(connectionString, fdbc.fdb_create_database_from_connection_string);
 }
 
-typedef DbCreateFun = int Function(Pointer<Char>, Pointer<Pointer<FDB_database>>);
-
 Database _open(String connect, DbCreateFun createDbFun) {
   final connectC = connect.toNativeUtf8().cast<Char>();
   final ppDatabase = calloc<Pointer<FDB_database>>();
@@ -30,36 +28,22 @@ Database _open(String connect, DbCreateFun createDbFun) {
   }
 }
 
-// TODO:
-// operator [](key) {}
-// operator []=(key, value) {}
-// add(key, param) {}
-// bitAnd(key, param) {}
-// bitOr(key, param) {}
-// bitXor(key, param) {}
-// clear(key) {}
-// clearAndWatch(key) {}
-// clearRange(begin, end) {}
-// clearRangeStartWith(prefix) {}
-// close() {}
-// doReadTransaction() {}
-// doTransaction() {}
-// doTxn() {}
-// get(key) {}
-// getAndWatch(key) {}
-// getKey(keyselector) {}
-// getRange(begin, end, options) {}
-// getRangeStartWith(prefix, options) {}
-// keyEncoding() {}
-// openTenant() {}
-// rebootWorker() {}
-// set(key, value) {}
-// setAndWatch(key, value) {}
+typedef DbCreateFun = int Function(Pointer<Char>, Pointer<Pointer<FDB_database>>);
+
+void withDatabase(void Function(Database db) f, [String clusterFile = '']) {
+  final db = openDatabase(clusterFile);
+  f(db);
+  db.close();
+}
 
 class Database {
   final Pointer<FDB_database> _database;
 
   Database(this._database);
+
+  void close() {
+    fdbc.fdb_database_destroy(_database);
+  }
 
   Transaction createTransaction() {
     final ppTransaction = calloc<Pointer<FDB_transaction>>();
@@ -68,6 +52,35 @@ class Database {
       return Transaction(ppTransaction.value);
     } finally {
       calloc.free(ppTransaction);
+    }
+  }
+
+  // retries?
+  void withTransaction(void Function(Transaction txn) f) {
+    final txn = createTransaction();
+    f(txn);
+    txn.commit();
+  }
+
+  bool rebootWorker(String address, bool checkFile, int suspendDuration) {
+    final addressC = address.toNativeUtf8();
+    final isSent = calloc<Int64>();
+    try {
+      final f = fdbc.fdb_database_reboot_worker(
+        _database,
+        addressC.cast(),
+        address.length,
+        checkFile ? 1 : 0,
+        suspendDuration,
+      );
+      handleError(fdbc.fdb_future_block_until_ready(f));
+      handleError(fdbc.fdb_future_get_int64(f, isSent));
+      int res = isSent.value;
+      fdbc.fdb_future_destroy(f);
+      return res == 0 ? false : true;
+    } finally {
+      calloc.free(addressC);
+      calloc.free(isSent);
     }
   }
 
@@ -203,10 +216,6 @@ class Database {
   setUseConfigDatabase() {
     _setOption(800);
   }
-
-  transact() {}
-
-  valueEncoding() {}
 
   void _setIntOption(int option, int value) {
     final valueC = calloc<Int64>().cast<Uint8>();

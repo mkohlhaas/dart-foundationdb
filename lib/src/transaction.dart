@@ -4,13 +4,8 @@ import 'package:ffi/ffi.dart';
 
 import '../foundationdb.dart';
 
-// TODO:
-// getRangeSplitPoints(beginKey, endKey, chunkSize) {}
-// getRangeStartWith(prefix, options) {}
-
 class Transaction {
-  // Database? database;
-  late final Pointer<FDB_transaction> _txn;
+  final Pointer<FDB_transaction> _txn;
 
   Transaction(this._txn);
 
@@ -111,6 +106,37 @@ class Transaction {
     _atomic(key, value, FDBMutationType.FDB_MUTATION_TYPE_COMPARE_AND_CLEAR);
   }
 
+  List<String> getRangeSplitPoints(String beginKey, String endKey, int chunkSize) {
+    final res = <String>[];
+    final keyBeg = beginKey.toNativeUtf8();
+    final keyEnd = endKey.toNativeUtf8();
+    final keyArray = calloc<Pointer<key>>();
+    final count = calloc<Int>();
+    try {
+      final f = fdbc.fdb_transaction_get_range_split_points(
+        _txn,
+        keyBeg.cast(),
+        keyBeg.length,
+        keyEnd.cast(),
+        keyEnd.length,
+        chunkSize,
+      );
+      handleError(fdbc.fdb_future_block_until_ready(f));
+      handleError(fdbc.fdb_future_get_key_array(f, keyArray, count));
+      for (var i = 0; i < count.value; i++) {
+        final pStr = keyArray.value.elementAt(i).ref.key1.cast<Utf8>();
+        final keyLength = keyArray.value.elementAt(i).ref.key_length;
+        res.add(pStr.toDartString(length: keyLength));
+      }
+      return res;
+    } finally {
+      calloc.free(keyBeg);
+      calloc.free(keyEnd);
+      calloc.free(keyArray);
+      calloc.free(count);
+    }
+  }
+
   String? get(String key, [bool isSnapshot = false]) {
     String? res;
     final keyC = key.toNativeUtf8();
@@ -205,7 +231,7 @@ class Transaction {
       print('length: ${keyLength.value}');
       print('char: ${key.value.value}');
       // system metadata
-      if (key.value.value != 0xFF) {
+      if (key.value.value.isNotSystemKey) {
         result = key.value.cast<Utf8>().toDartString(length: keyLength.value);
       }
       fdbc.fdb_future_destroy(f);
@@ -215,6 +241,10 @@ class Transaction {
       calloc.free(key);
       calloc.free(keyLength);
     }
+  }
+
+  Iterable<(String, String)> getRangeStartWith(String prefix) {
+    return TransactionIterable(_txn, prefix.firstGreaterOrEqual, prefix.lastLessOrEqual);
   }
 
   Iterable<(String, String)> getRange(KeySelector begin, KeySelector end) {
@@ -666,17 +696,19 @@ class Transaction {
 
   void _atomic(String key, int value, int op) {
     final keyC = key.toNativeUtf8();
+    final packedValue = pack(value);
     try {
       fdbc.fdb_transaction_atomic_op(
         _txn,
         keyC.cast(),
         keyC.length,
-        pack(value),
+        packedValue,
         sizeOf<Uint64>(),
         op,
       );
     } finally {
       calloc.free(keyC);
+      calloc.free(packedValue);
     }
   }
 
@@ -729,23 +761,6 @@ class TransactionIterable extends Iterable<(String, String)> {
   Iterator<(String, String)> get iterator => TransactionIterator(_txn, _begin, _end);
 }
 
-// (un-)pack functions:
-//
-// for (var item in ['String', nullString, 2341, 45.4]) {
-//   switch (item) {
-//     case _ when item is double:
-//       print(item);
-//     case _ when item == null:
-//       print(item);
-//     case _ when item is int:
-//       print(item);
-//     case _ when item is bool:
-//       print(item);
-//     case _ when item is String:
-//       print(item);
-//   }
-// }
-
 class TransactionIterator implements Iterator<(String, String)> {
   final Pointer<FDB_transaction> _txn;
   final KeySelector _begin;
@@ -793,7 +808,7 @@ class TransactionIterator implements Iterator<(String, String)> {
       handleError(fdbc.fdb_future_get_keyvalue_array(f, kv, count, more));
       var lst = <(String, String)>[];
       for (var i = 0; i < count.value; i++) {
-        if (kv.value.ref.key.value != 0xFF) {
+        if (kv.value.ref.key.value.isNotSystemKey) {
           String key =
               kv.value.elementAt(i).ref.key.cast<Utf8>().toDartString(length: kv.value.elementAt(i).ref.key_length);
           String value =

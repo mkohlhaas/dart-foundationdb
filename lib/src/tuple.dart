@@ -14,3 +14,21 @@ class Tuple {}
 // const trueCode = 0x27
 // const uuidCode = 0x30
 // const versionstampCode = 0x33
+
+// (un-)pack functions:
+//
+// for (var item in ['String', nullString, 2341, 45.4]) {
+//   switch (item) {
+//     case _ when item is double:
+//       print(item);
+//     case _ when item == null:
+//       print(item);
+//     case _ when item is int:
+//       print(item);
+//     case _ when item is bool:
+//       print(item);
+//     case _ when item is String:
+//       print(item);
+//   }
+// }
+
