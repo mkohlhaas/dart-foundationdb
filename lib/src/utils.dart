@@ -27,6 +27,10 @@ Pointer<Uint8> pack(int number) {
   return res;
 }
 
+extension Uint8ListStr on String {
+  Uint8List get uint8List => convertStringToUint8List(this);
+}
+
 extension StrUint8List on Uint8List {
   String get string => convertUint8ListToString(this);
 }

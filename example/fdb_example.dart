@@ -7,16 +7,17 @@ main() async {
     await startNetwork();
     withDatabase((Database db) {
       db.withTransaction((Transaction txn) {
-        for (var i = 0; i < 500; i++) {
+        for (var i = 0; i <= 500; i++) {
           // txn.clear('hello${i.toString().padLeft(3, '0')}');
           txn['hello${i.toString().padLeft(3, '0')}'] = 'world${i.toString().padLeft(3, '0')}';
         }
-        final beg = 'hello'.firstGreaterOrEqual;
-        final end = 'i'.lastLessOrEqual;
+        final beg = 'hello'.first;
+        final end = 'my1'.last;
         for (final (key, value) in txn.getRange(beg, end)) {
           print('$key: $value');
         }
-        for (final (key, value) in txn.getRange(beg, end, limit: 50, reverse: true, snapshot: true)) {
+        print('');
+        for (final (key, value) in txn.getRange(beg, end, limit: 20, reverse: true, snapshot: true)) {
           print('$key: $value');
         }
       });

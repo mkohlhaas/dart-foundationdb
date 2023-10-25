@@ -15,8 +15,10 @@ class KeySelector {
 }
 
 extension AsKeyValue on String {
+  KeySelector get first => KeySelector(this, 0, 1);
   KeySelector get firstGreaterOrEqual => KeySelector(this, 0, 1);
   KeySelector get firstGreaterThan => KeySelector(this, 1, 1);
+  KeySelector get last => KeySelector(this, 1, 0) + 1;
   KeySelector get lastLessOrEqual => KeySelector(this, 1, 0);
   KeySelector get lastLessThan => KeySelector(this, 0, 0);
 }

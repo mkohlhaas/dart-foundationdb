@@ -243,6 +243,34 @@ class Transaction {
     }
   }
 
+  // TODO: getRangeStartsWith
+
+  // You'll need strinc():
+
+  // Ruby:
+  // def strinc(key):
+  //   key = key.rstrip(b"\xff")
+  //   if len(key) == 0:
+  //       raise ValueError("Key must contain at least one byte not equal to 0xFF.")
+  //   return key[:-1] + six.int2byte(ord(key[-1:]) + 1)
+
+  // Python:
+  // def strinc(key):
+  //     key = key.rstrip(b"\xff")
+  //     if len(key) == 0:
+  //         raise ValueError("Key must contain at least one byte not equal to 0xFF.")
+  //     return key[:-1] + six.int2byte(ord(key[-1:]) + 1)
+
+  // use conversion functions from util.dart
+
+  // extension Uint8ListStr on String {
+  //   Uint8List get uint8List => convertStringToUint8List(this);
+  // }
+
+  // extension StrUint8List on Uint8List {
+  //   String get string => convertUint8ListToString(this);
+  // }
+
   Iterable<(String, String)> getRange(
     KeySelector begin,
     KeySelector end, {
@@ -818,7 +846,7 @@ class TransactionIterator implements Iterator<(String, String)> {
           String key = ref.key.cast<Utf8>().toDartString(length: ref.key_length);
           String value = ref.value.cast<Utf8>().toDartString(length: ref.value_length);
           if (_reverse) {
-            _end = key.lastLessOrEqual;
+            _end = key.lastLessThan;
           } else {
             _begin = key.firstGreaterThan;
           }
