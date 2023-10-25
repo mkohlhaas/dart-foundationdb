@@ -13,16 +13,10 @@ void runNetwork() {
   handleError(fdbc.fdb_run_network());
 }
 
-/// /
-/// /* Parameter: Option takes no parameter
-// 49
 void setBuggifyDisable() {
   _setOption(49);
 }
 
-/// /
-/// /* Parameter: Option takes no parameter
-// 48
 void setBuggifyEnable() {
   _setOption(48);
 }
@@ -251,7 +245,6 @@ async.Future<void> startNetwork() async {
 void stopNetwork() {
   _receivePort.listen((Object? message) {
     if (message == null) {
-      print('shutdown fdb');
       _receivePort.close();
     }
   });

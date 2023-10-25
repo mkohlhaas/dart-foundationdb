@@ -243,10 +243,6 @@ class Transaction {
     }
   }
 
-  Iterable<(String, String)> getRangeStartWith(String prefix) {
-    return TransactionIterable(_txn, prefix.firstGreaterOrEqual, prefix.lastLessOrEqual);
-  }
-
   Iterable<(String, String)> getRange(KeySelector begin, KeySelector end) {
     return TransactionIterable(_txn, begin, end);
   }
@@ -765,16 +761,16 @@ class TransactionIterator implements Iterator<(String, String)> {
   final Pointer<FDB_transaction> _txn;
   final KeySelector _begin;
   final KeySelector _end;
-  final kvPairs = <(String, String)>[];
+  final _kvPairs = <(String, String)>[];
   bool _more = true;
   int _iteration = 1;
 
   TransactionIterator(this._txn, this._begin, this._end);
 
   @override
-  (String, String) get current => kvPairs.removeAt(0);
+  (String, String) get current => _kvPairs.removeAt(0);
 
-  (bool, List<(String, String)>)? getRange(
+  (bool, List<(String, String)>) getRange(
     KeySelector begin,
     KeySelector end,
     int iteration,
@@ -806,13 +802,14 @@ class TransactionIterator implements Iterator<(String, String)> {
       );
       handleError(fdbc.fdb_future_block_until_ready(f));
       handleError(fdbc.fdb_future_get_keyvalue_array(f, kv, count, more));
+      // print(more.value);
+      print('count: ${count.value}');
       var lst = <(String, String)>[];
       for (var i = 0; i < count.value; i++) {
         if (kv.value.ref.key.value.isNotSystemKey) {
-          String key =
-              kv.value.elementAt(i).ref.key.cast<Utf8>().toDartString(length: kv.value.elementAt(i).ref.key_length);
-          String value =
-              kv.value.elementAt(i).ref.value.cast<Utf8>().toDartString(length: kv.value.elementAt(i).ref.value_length);
+          final ref = kv.value.elementAt(i).ref;
+          String key = ref.key.cast<Utf8>().toDartString(length: ref.key_length);
+          String value = ref.value.cast<Utf8>().toDartString(length: ref.value_length);
           lst.add((key, value));
         }
       }
@@ -829,20 +826,14 @@ class TransactionIterator implements Iterator<(String, String)> {
 
   @override
   bool moveNext() {
-    bool more;
-    List<(String, String)> pairs;
-
     if (_more) {
-      final res = getRange(_begin, _end, _iteration++, false, false);
-      if (res == null) {
-        print('more: false');
-        return false;
-      } else {
-        (more, pairs) = res;
-        kvPairs.addAll(pairs);
-        _more = more;
-      }
+      final (more, pairs) = getRange(_begin, _end, _iteration++, false, false);
+      print('more: $more');
+      _kvPairs.addAll(pairs);
+      _more = more;
+      print(_kvPairs);
     }
-    return kvPairs.isNotEmpty;
+    print(_more);
+    return _kvPairs.isNotEmpty;
   }
 }

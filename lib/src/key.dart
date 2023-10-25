@@ -21,7 +21,9 @@ extension AsKeyValue on String {
   KeySelector get lastLessThan => KeySelector(this, 0, 0);
 }
 
+const int systemkey = 0xFF;
+
 extension SystemKey on int {
-  bool get isNotSystemKey => this != 0xFF;
-  bool get isSystemKey => this == 0xFF;
+  bool get isNotSystemKey => this != systemkey;
+  bool get isSystemKey => this == systemkey;
 }
