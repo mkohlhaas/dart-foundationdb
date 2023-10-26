@@ -74,8 +74,7 @@ class Transaction {
     }
   }
 
-  void clearRange(String begin, [String? end]) {
-    end ??= 0xFF.toRadixString(16);
+  void clearRange(String begin, String end) {
     final keyBegin = begin.toNativeUtf8();
     final keyEnd = end.toNativeUtf8();
     try {
@@ -93,7 +92,7 @@ class Transaction {
   }
 
   void clearRangeStartWith(String prefix) {
-    clearRange(prefix);
+    clearRange(prefix, strinc(prefix));
   }
 
   void commit() {
@@ -108,15 +107,15 @@ class Transaction {
 
   List<String> getRangeSplitPoints(String beginKey, String endKey, int chunkSize) {
     final res = <String>[];
-    final keyBeg = beginKey.toNativeUtf8();
+    final keyBegin = beginKey.toNativeUtf8();
     final keyEnd = endKey.toNativeUtf8();
     final keyArray = calloc<Pointer<key>>();
     final count = calloc<Int>();
     try {
       final f = fdbc.fdb_transaction_get_range_split_points(
         _txn,
-        keyBeg.cast(),
-        keyBeg.length,
+        keyBegin.cast(),
+        keyBegin.length,
         keyEnd.cast(),
         keyEnd.length,
         chunkSize,
@@ -130,7 +129,7 @@ class Transaction {
       }
       return res;
     } finally {
-      calloc.free(keyBeg);
+      calloc.free(keyBegin);
       calloc.free(keyEnd);
       calloc.free(keyArray);
       calloc.free(count);
