@@ -5,7 +5,11 @@ class Tuple {}
 // https://dart.dev/guides/testing
 // https://docs.flutter.dev/cookbook/testing/unit/introduction
 
+// Property testing:
+// https://pub.dev/packages/glados
+
 // https://github.com/josephg/fdb-tuple/tree/master/lib
+
 // ByteData for encoding/decoding
 
 // from go binding
