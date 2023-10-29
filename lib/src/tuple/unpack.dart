@@ -6,36 +6,44 @@ import 'package:uuid/uuid.dart';
 import '../../foundationdb.dart';
 
 extension UnpackUint8List on Uint8List {
-  Tuple unpack([bool isNested = false]) {
+  Tuple unpack({required Tuple acc}) {
+    print('unpack');
     int len = 0;
-    Tuple result = [];
+    // Tuple result = [];
     dynamic res;
     Uint8List cpLst = Uint8List.sublistView(this);
-    while (cpLst.isNotEmpty) {
-      int opcode = cpLst[0];
-      cpLst = Uint8List.sublistView(cpLst, 1);
-      (res, len) = switch (opcode) {
-        0x00 => cpLst.unpackNull(isNested),
-        0x01 => cpLst.unpackUint8List(),
-        0x02 => cpLst.unpackString(),
-        0x05 => cpLst.unpackNestedTuple(true),
-        0x0c => cpLst.unpackInteger(),
-        0x1c => cpLst.unpackInteger(),
-        0x14 => cpLst.unpackZeroInteger(),
-        0x21 => cpLst.unpackDouble(),
-        0x26 => cpLst.unpackFalse(),
-        0x27 => cpLst.unpackTrue(),
-        0x30 => cpLst.unpackUuidValue(),
-        _ => throw ArgumentError('Found unknown opcode: $opcode'),
-      };
-      result.add(res);
-      cpLst = Uint8List.sublistView(cpLst, len);
+    try {
+      while (cpLst.isNotEmpty) {
+        int opcode = cpLst[0];
+        print('opcode: $opcode');
+        cpLst = Uint8List.sublistView(cpLst, 1);
+        (res, len) = switch (opcode) {
+          0x00 => cpLst.unpackNull(),
+          0x01 => cpLst.unpackUint8List(),
+          0x02 => cpLst.unpackString(),
+          // 0x05 => cpLst.unpackNestedTuple(true),
+          0x05 => (cpLst.unpack(acc: acc), cpLst.buffer.lengthInBytes - cpLst.offsetInBytes),
+          0x0c => cpLst.unpackInteger(),
+          0x1c => cpLst.unpackInteger(),
+          0x14 => cpLst.unpackZeroInteger(),
+          0x21 => cpLst.unpackDouble(),
+          0x26 => cpLst.unpackFalse(),
+          0x27 => cpLst.unpackTrue(),
+          0x30 => cpLst.unpackUuidValue(),
+          _ => throw ArgumentError('Found unknown opcode: $opcode'),
+        };
+        // result.add(res);
+        acc.add(res);
+        cpLst = Uint8List.sublistView(cpLst, len);
+        print('${cpLst.length}: $len');
+      }
+      return acc;
+    } on UnPackException {
+      print('hit end marker');
       print('${cpLst.length}: $len');
+      print(acc);
+      return acc;
     }
-    if (cpLst.isNotEmpty) {
-      throw ArgumentError('There are still things to unpack in the buffer.');
-    }
-    return result;
   }
 
   (dynamic, int) unpackByteList(Function(List<int>) f, [bool isNested = false]) {
@@ -54,14 +62,6 @@ extension UnpackUint8List on Uint8List {
       }
     }
   }
-
-  // if (this < 0) {
-  //   for (var i = 0; i < r.length; i++) {
-  //     r[i] = ~r[i];
-  //   }
-  // } else {
-  //   r[0] ^= 0x80;
-  // }
 
   (double, int) unpackDouble() {
     ByteData bdata = buffer.asByteData(offsetInBytes, 8);
@@ -96,15 +96,14 @@ extension UnpackUint8List on Uint8List {
     return ([], 0);
   }
 
-  (void, int) unpackNull([bool isNested = false]) {
-    if (isNested) {
-      if (this[0] != 0xff) {
-        throw ArgumentError('Unpacking a nested Null must be terminated by 0xff.');
+  (void, int) unpackNull() {
+    print('lengthInBytes - offsetInBytes: ${lengthInBytes} - ${offsetInBytes}');
+    if (lengthInBytes > 0) {
+      if (this[0] == 0xff) {
+        return (null, 1);
       }
-      return (null, 1);
-    } else {
-      return (null, 0);
     }
+    throw UnPackException('Hit end marker.');
   }
 
   (String, int) unpackString() {
@@ -132,4 +131,13 @@ extension UnpackUint8List on Uint8List {
   (int, int) unpackZeroInteger() {
     return (0, 0);
   }
+}
+
+class UnPackException implements Exception {
+  final String message;
+
+  UnPackException(this.message);
+
+  @override
+  String toString() => message;
 }
