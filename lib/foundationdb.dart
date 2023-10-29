@@ -11,5 +11,6 @@ export 'src/library.dart';
 export 'src/network.dart';
 export 'src/subspace/subspace.dart';
 export 'src/transaction.dart';
-export 'src/tuple/tuple.dart';
+export 'src/tuple/pack.dart';
+export 'src/tuple/unpack.dart';
 export 'src/utils.dart';
