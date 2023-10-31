@@ -1,8 +1,11 @@
 import 'dart:typed_data';
 
+// ignore: deprecated_member_use, depend_on_referenced_packages
+import "package:collection/equality.dart";
 import 'package:foundationdb/foundationdb.dart';
 import 'package:test/test.dart';
 import 'package:uuid/uuid.dart';
+import 'package:uuid/v1.dart';
 
 void main() {
   group('Encoding/Decoding:', () {
@@ -211,5 +214,142 @@ void main() {
         });
       });
     });
+    group('Inverse', () {
+      test('of null', () {
+        Tuple toTest = [null];
+        testInverseProperty(toTest);
+      });
+      test('of false', () {
+        Tuple toTest = [false];
+        testInverseProperty(toTest);
+      });
+      test('of true', () {
+        Tuple toTest = [true];
+        testInverseProperty(toTest);
+      });
+      test('of Byte List', () {
+        Tuple toTest = [
+          Uint8List.fromList([102, 111, 111])
+        ];
+        testInverseProperty(toTest);
+      });
+      test('Byte List with 0x00', () {
+        Tuple toTest = [
+          Uint8List.fromList([102, 111, 111, 0x00, 98, 97, 114])
+        ];
+        testInverseProperty(toTest);
+      });
+      test('Unicode String', () {
+        Tuple toTest = ['foo'];
+        testInverseProperty(toTest);
+      });
+      test('Unicode String with 0x00', () {
+        Tuple toTest = ['foo\u0000bar'];
+        testInverseProperty(toTest);
+      });
+      group('Integer:', () {
+        group('Zero:', () {
+          test('0', () {
+            Tuple toTest = [0];
+            testInverseProperty(toTest);
+          });
+        });
+        group('Positive:', () {
+          test('1', () {
+            Tuple toTest = [1];
+            testInverseProperty(toTest);
+          });
+          test('2', () {
+            Tuple toTest = [2];
+            testInverseProperty(toTest);
+          });
+          test('5551212', () {
+            Tuple toTest = [5551212];
+            testInverseProperty(toTest);
+          });
+        });
+        group('Negative:', () {
+          test('-1', () {
+            Tuple toTest = [-1];
+            testInverseProperty(toTest);
+          });
+          test('-2', () {
+            Tuple toTest = [-2];
+            testInverseProperty(toTest);
+          });
+          test('-5551212', () {
+            Tuple toTest = [-5551212];
+            testInverseProperty(toTest);
+          });
+        });
+      });
+      group('Double:', () {
+        group('Positive:', () {
+          test('5551212.0', () {
+            Tuple toTest = [5551212.0];
+            testInverseProperty(toTest);
+          });
+          test('10.0', () {
+            Tuple toTest = [10.0];
+            testInverseProperty(toTest);
+          });
+          test('20.0', () {
+            Tuple toTest = [20.0];
+            testInverseProperty(toTest);
+          });
+        });
+        group('Negative:', () {
+          test('-5551212.0', () {
+            Tuple toTest = [-5551212.0];
+            testInverseProperty(toTest);
+          });
+          test('-10.0', () {
+            Tuple toTest = [-10.0];
+            testInverseProperty(toTest);
+          });
+          test('-20.0', () {
+            Tuple toTest = [-20.0];
+            testInverseProperty(toTest);
+          });
+        });
+      });
+      group('Bool:', () {
+        test('False', () {
+          Tuple toTest = [false];
+          testInverseProperty(toTest);
+        });
+        test('Bool: True', () {
+          Tuple toTest = [true];
+          testInverseProperty(toTest);
+        });
+      });
+      group('UUIDValue:', () {
+        test('Uuid Value', () {
+          Tuple toTest = [UuidValue.fromString(UuidV1().generate())];
+          testInverseProperty(toTest);
+        });
+      });
+      group('Tuples:', () {
+        test('Null:', () {
+          var toTest = [null];
+          expect(toTest.pack().unpack(), toTest);
+        });
+        test('Null and Empty List', () {
+          var toTest = [
+            Uint8List.fromList([102, 111, 111, 0x00, 98, 97, 114]),
+            null,
+            []
+          ];
+          expect(toTest.pack().unpack(), toTest);
+        });
+      });
+    });
   });
+}
+
+void testInverseProperty(Tuple toTest) {
+  final dce = DeepCollectionEquality();
+  Tuple toTestPackedAndUnpacked = toTest.pack().unpack();
+  bool isEqual = dce.equals(toTest, toTestPackedAndUnpacked);
+  expect(isEqual, true);
 }
