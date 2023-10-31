@@ -23,10 +23,10 @@ extension PackDouble on double {
     final r = Uint8List.fromList(bdata.buffer.asUint8List(0, 8));
     if (this < 0) {
       for (var i = 0; i < r.length; i++) {
-        r[i] = ~r[i];
+        r[i] = ~r[i]; // flip all bits
       }
     } else {
-      r[0] ^= 0x80;
+      r[0] ^= 0x80; // flip sign bit
     }
     res.addAll(r);
     return Uint8List.fromList(res);
@@ -95,7 +95,7 @@ extension PackTuple on Tuple {
           res.addAll(item.pack());
         case _ when item is Uint8List:
           res.addAll(item.pack());
-        case _ when item is List:
+        case _ when item is Tuple:
           res.addAll(item.pack());
         default:
           throw ArgumentError('Unknown packable item type for: $item');

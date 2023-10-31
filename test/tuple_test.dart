@@ -93,7 +93,8 @@ void main() {
         group('UUID:', () {
           test('110ec58a-a0f2-4ac4-8393-c866d813b8d1', () {
             final uuid = UuidValue.fromString('110ec58a-a0f2-4ac4-8393-c866d813b8d1');
-            expect(uuid.pack(), Uint8List.fromList([0x30, 17, 14, 197, 138, 160, 242, 74, 196, 131, 147, 200, 102, 216, 19, 184, 209]));
+            expect(uuid.pack(),
+                Uint8List.fromList([0x30, 17, 14, 197, 138, 160, 242, 74, 196, 131, 147, 200, 102, 216, 19, 184, 209]));
           });
         });
         group('Tuples:', () {
@@ -107,7 +108,8 @@ void main() {
                   null,
                   []
                 ].pack(),
-                Uint8List.fromList([0x05, 0x01, 102, 111, 111, 0x00, 0xff, 98, 97, 114, 0x00, 0x00, 0xff, 0x05, 0x00, 0x00]));
+                Uint8List.fromList(
+                    [0x05, 0x01, 102, 111, 111, 0x00, 0xff, 98, 97, 114, 0x00, 0x00, 0xff, 0x05, 0x00, 0x00]));
           });
         });
       });
@@ -196,7 +198,9 @@ void main() {
         });
         group('UUID:', () {
           test('110ec58a-a0f2-4ac4-8393-c866d813b8d1', () {
-            expect(Uint8List.fromList([0x30, 17, 14, 197, 138, 160, 242, 74, 196, 131, 147, 200, 102, 216, 19, 184, 209]).unpack(),
+            expect(
+                Uint8List.fromList([0x30, 17, 14, 197, 138, 160, 242, 74, 196, 131, 147, 200, 102, 216, 19, 184, 209])
+                    .unpack(),
                 [UuidValue.fromString('110ec58a-a0f2-4ac4-8393-c866d813b8d1')]);
           });
         });
@@ -205,25 +209,28 @@ void main() {
             expect(Uint8List.fromList([0x05, 0, 255, 0]).unpack(), [null]);
           });
           test('Null and Empty List:', () {
-            expect(Uint8List.fromList([0x05, 0x01, 102, 111, 111, 0x00, 0xff, 98, 97, 114, 0x00, 0x00, 0xff, 0x05, 0x00, 0x00]).unpack(), [
-              Uint8List.fromList([102, 111, 111, 0x00, 98, 97, 114]),
-              null,
-              []
-            ]);
+            expect(
+                Uint8List.fromList(
+                    [0x05, 0x01, 102, 111, 111, 0x00, 0xff, 98, 97, 114, 0x00, 0x00, 0xff, 0x05, 0x00, 0x00]).unpack(),
+                [
+                  Uint8List.fromList([102, 111, 111, 0x00, 98, 97, 114]),
+                  null,
+                  []
+                ]);
           });
         });
       });
     });
     group('Inverse', () {
-      test('of null', () {
+      test('of [null]', () {
         Tuple toTest = [null];
         testInverseProperty(toTest);
       });
-      test('of false', () {
+      test('of [false]', () {
         Tuple toTest = [false];
         testInverseProperty(toTest);
       });
-      test('of true', () {
+      test('of [true]', () {
         Tuple toTest = [true];
         testInverseProperty(toTest);
       });
@@ -249,35 +256,35 @@ void main() {
       });
       group('Integer:', () {
         group('Zero:', () {
-          test('0', () {
+          test('[0]', () {
             Tuple toTest = [0];
             testInverseProperty(toTest);
           });
         });
         group('Positive:', () {
-          test('1', () {
+          test('[1]', () {
             Tuple toTest = [1];
             testInverseProperty(toTest);
           });
-          test('2', () {
+          test('[2]', () {
             Tuple toTest = [2];
             testInverseProperty(toTest);
           });
-          test('5551212', () {
+          test('[5551212]', () {
             Tuple toTest = [5551212];
             testInverseProperty(toTest);
           });
         });
         group('Negative:', () {
-          test('-1', () {
+          test('[-1]', () {
             Tuple toTest = [-1];
             testInverseProperty(toTest);
           });
-          test('-2', () {
+          test('[-2]', () {
             Tuple toTest = [-2];
             testInverseProperty(toTest);
           });
-          test('-5551212', () {
+          test('[-5551212]', () {
             Tuple toTest = [-5551212];
             testInverseProperty(toTest);
           });
@@ -285,40 +292,40 @@ void main() {
       });
       group('Double:', () {
         group('Positive:', () {
-          test('5551212.0', () {
+          test('[5551212.0]', () {
             Tuple toTest = [5551212.0];
             testInverseProperty(toTest);
           });
-          test('10.0', () {
+          test('[10.0]', () {
             Tuple toTest = [10.0];
             testInverseProperty(toTest);
           });
-          test('20.0', () {
+          test('[20.0]', () {
             Tuple toTest = [20.0];
             testInverseProperty(toTest);
           });
         });
         group('Negative:', () {
-          test('-5551212.0', () {
+          test('[-5551212.0]', () {
             Tuple toTest = [-5551212.0];
             testInverseProperty(toTest);
           });
-          test('-10.0', () {
+          test('[-10.0]', () {
             Tuple toTest = [-10.0];
             testInverseProperty(toTest);
           });
-          test('-20.0', () {
+          test('[-20.0]', () {
             Tuple toTest = [-20.0];
             testInverseProperty(toTest);
           });
         });
       });
       group('Bool:', () {
-        test('False', () {
+        test('[false]', () {
           Tuple toTest = [false];
           testInverseProperty(toTest);
         });
-        test('Bool: True', () {
+        test('Bool: [true]', () {
           Tuple toTest = [true];
           testInverseProperty(toTest);
         });
@@ -330,17 +337,34 @@ void main() {
         });
       });
       group('Tuples:', () {
-        test('Null:', () {
+        test('[null]:', () {
           var toTest = [null];
-          expect(toTest.pack().unpack(), toTest);
+          testInverseProperty(toTest);
         });
         test('Null and Empty List', () {
-          var toTest = [
+          Tuple toTest = [
             Uint8List.fromList([102, 111, 111, 0x00, 98, 97, 114]),
             null,
             []
           ];
-          expect(toTest.pack().unpack(), toTest);
+          testInverseProperty(toTest);
+        });
+        test('All mixed up:', () {
+          Tuple toTest = [
+            null,
+            [],
+            Uint8List.fromList([102, 111, 111, 0x00, 98, 97, 114]),
+            'Hallo',
+            0,
+            -245,
+            -4534.234,
+            UuidValue.fromString(UuidV1().generate()),
+            3242.234,
+            234432,
+            true,
+            false
+          ];
+          testInverseProperty(toTest);
         });
       });
     });

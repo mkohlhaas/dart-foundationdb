@@ -46,12 +46,14 @@ extension UnpackUint8List on Uint8List {
   }
 
   (double, Uint8List) unpackDouble() {
-    ByteData bdata = bufAsByteData(8);
+    ByteData bdata = bufAsByteData();
     if (this[0] & 0x80 == 0) {
-      for (var i = 0; i < length; i++) {
+      // double is negative
+      for (var i = 0; i < 8; i++) {
         this[i] = ~this[i];
       }
     } else {
+      // double is positive
       this[0] ^= 0x80;
     }
     return (bdata.getFloat64(0), skipBy(8));
@@ -62,13 +64,13 @@ extension UnpackUint8List on Uint8List {
   }
 
   (int, Uint8List) unpackInteger() {
-    ByteData bdata = bufAsByteData(8);
+    ByteData bdata = bufAsByteData();
     return (bdata.getInt64(0), skipBy(8));
   }
 
   (int, int) unpackIntegerNegative() {
-    ByteData bdata = bufAsByteData(8);
-    for (var i = 0; i < length; i++) {
+    ByteData bdata = bufAsByteData();
+    for (var i = 0; i < 8; i++) {
       this[i] = ~this[i];
     }
     return (bdata.getInt64(0), 8);
@@ -120,7 +122,7 @@ extension UnpackUint8List on Uint8List {
     try {
       while (cpLst.isNotEmpty) {
         int opcode = cpLst[0];
-        cpLst = Uint8List.sublistView(cpLst, 1);
+        cpLst = Uint8List.sublistView(cpLst, 1); // skip opcode
         if (isRoot) {
           isRoot = false;
           if (opcode == 0x05) {
@@ -132,8 +134,8 @@ extension UnpackUint8List on Uint8List {
           0x01 => cpLst.unpackUint8List(),
           0x02 => cpLst.unpackString(),
           0x05 => cpLst._unpack([]), // nested tuple
-          0x0c => cpLst.unpackInteger(),
-          0x1c => cpLst.unpackInteger(),
+          0x0C => cpLst.unpackInteger(),
+          0x1C => cpLst.unpackInteger(),
           0x14 => cpLst.unpackZeroInteger(),
           0x21 => cpLst.unpackDouble(),
           0x26 => cpLst.unpackFalse(),
